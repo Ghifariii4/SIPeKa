@@ -6,10 +6,13 @@ import com.smkn8jkt.sipeka.data.model.LoginRequest
 import com.smkn8jkt.sipeka.data.model.LoginResponse
 import com.smkn8jkt.sipeka.data.model.OrderData
 import com.smkn8jkt.sipeka.data.model.OrderRequest
+import com.smkn8jkt.sipeka.data.model.PayoutResponse
 import com.smkn8jkt.sipeka.data.model.ProductResponse
+import com.smkn8jkt.sipeka.data.model.ProfitResponse
 import com.smkn8jkt.sipeka.data.model.RegisterRequest
 import com.smkn8jkt.sipeka.data.model.ScanData
 import com.smkn8jkt.sipeka.data.model.ShiftData
+import com.smkn8jkt.sipeka.data.model.ShiftValidationResponse
 import com.smkn8jkt.sipeka.data.model.UserData
 import retrofit2.Response
 import retrofit2.http.Body
@@ -56,7 +59,7 @@ interface ApiService {
         @Body request: OrderRequest
     ): Response<BaseResponse<Any>>
 
-    // Admin (Manajemen User)
+    // Admin (Manajemen User & Pendaftaran)
     @GET("admin/users")
     suspend fun getUsers(): Response<BaseResponse<List<UserData>>>
 
@@ -74,6 +77,26 @@ interface ApiService {
     suspend fun approveUser(
         @Path("id") id: String
     ): Response<BaseResponse<UserData>>
+
+    // Admin Finance (Laba, Validasi Setoran, Bagi Hasil)
+    @GET("admin/finance/profit")
+    suspend fun getSchoolProfit(): Response<BaseResponse<ProfitResponse>>
+
+    @GET("admin/finance/shifts")
+    suspend fun getPendingShifts(): Response<BaseResponse<List<ShiftValidationResponse>>>
+
+    @PUT("admin/finance/shifts/{id}/validate")
+    suspend fun validateShift(
+        @Path("id") shiftId: String
+    ): Response<BaseResponse<Any>>
+
+    @GET("admin/finance/payouts")
+    suspend fun getPendingPayouts(): Response<BaseResponse<List<PayoutResponse>>>
+
+    @PUT("admin/finance/payouts/{penitip_id}")
+    suspend fun processPayout(
+        @Path("penitip_id") penitipId: String
+    ): Response<BaseResponse<Any>>
 
     // Shifts (Kasir)
     @POST("shifts/clock-in")

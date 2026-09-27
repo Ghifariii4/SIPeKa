@@ -39,18 +39,20 @@ import com.smkn8jkt.sipeka.ApiTestScreen
 import com.smkn8jkt.sipeka.MainViewModel
 import com.smkn8jkt.sipeka.data.remote.TokenManager
 import com.smkn8jkt.sipeka.ui.components.PrimaryButton
+import com.smkn8jkt.sipeka.ui.screens.admin.AdminDashboardScreen
+import com.smkn8jkt.sipeka.ui.screens.admin.AdminViewModel
+import com.smkn8jkt.sipeka.ui.screens.admin.AdminViewModelFactory
 import com.smkn8jkt.sipeka.ui.screens.auth.AuthViewModel
 import com.smkn8jkt.sipeka.ui.screens.auth.LoginScreen
 import com.smkn8jkt.sipeka.ui.screens.auth.RegisterScreen
 import com.smkn8jkt.sipeka.ui.screens.pos.KasirHomeScreen
 import com.smkn8jkt.sipeka.ui.screens.pos.PosViewModel
+import com.smkn8jkt.sipeka.ui.screens.pos.PosViewModelFactory
 import com.smkn8jkt.sipeka.ui.screens.pos.ProfilKasirScreen
 import com.smkn8jkt.sipeka.ui.screens.pos.RiwayatScreen
 import com.smkn8jkt.sipeka.ui.screens.splash.SplashScreen
 import com.smkn8jkt.sipeka.ui.theme.BackgroundNeutral
 import com.smkn8jkt.sipeka.ui.theme.SecondaryBrown
-
-import com.smkn8jkt.sipeka.ui.screens.pos.PosViewModelFactory
 
 object Screen {
     const val Splash = "splash"
@@ -59,6 +61,7 @@ object Screen {
     const val Home = "home"
     const val History = "history"
     const val Profile = "profile"
+    const val AdminDashboard = "admin_dashboard"
     const val AccessDenied = "access_denied"
     const val DebugDashboard = "debug_dashboard"
 }
@@ -70,7 +73,8 @@ fun AppNavigation(
     mainViewModel: MainViewModel,
     tokenManager: TokenManager? = null,
     navController: NavHostController = rememberNavController(),
-    posViewModel: PosViewModel = viewModel(factory = PosViewModelFactory(tokenManager))
+    posViewModel: PosViewModel = viewModel(factory = PosViewModelFactory(tokenManager)),
+    adminViewModel: AdminViewModel = viewModel(factory = AdminViewModelFactory(tokenManager))
 ) {
     val currentRole by tokenManager?.roleFlow?.collectAsState(initial = null) ?: remember { mutableStateOf(null) }
     val authUserRole by authViewModel.userRole.collectAsState()
@@ -83,8 +87,15 @@ fun AppNavigation(
             SplashScreen(
                 tokenManager = tokenManager,
                 onNavigateToMain = {
-                    navController.navigate(Screen.Home) {
-                        popUpTo(Screen.Splash) { inclusive = true }
+                    val role = currentRole?.lowercase() ?: authUserRole?.lowercase() ?: "kasir"
+                    if (role == "admin" || role == "guru" || role == "pembina") {
+                        navController.navigate(Screen.AdminDashboard) {
+                            popUpTo(Screen.Splash) { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate(Screen.Home) {
+                            popUpTo(Screen.Splash) { inclusive = true }
+                        }
                     }
                 },
                 onNavigateToLogin = {
@@ -99,8 +110,12 @@ fun AppNavigation(
             LoginScreen(
                 viewModel = authViewModel,
                 onLoginSuccess = {
-                    val userRole = authViewModel.userRole.value?.lowercase() ?: currentRole?.lowercase() ?: "admin"
-                    if (userRole == "kasir" || userRole == "admin") {
+                    val userRole = authViewModel.userRole.value?.lowercase() ?: currentRole?.lowercase() ?: "kasir"
+                    if (userRole == "admin" || userRole == "guru" || userRole == "pembina") {
+                        navController.navigate(Screen.AdminDashboard) {
+                            popUpTo(Screen.Login) { inclusive = true }
+                        }
+                    } else if (userRole == "kasir") {
                         navController.navigate(Screen.Home) {
                             popUpTo(Screen.Login) { inclusive = true }
                         }
@@ -125,9 +140,25 @@ fun AppNavigation(
             )
         }
 
+        composable(Screen.AdminDashboard) {
+            AdminDashboardScreen(
+                navController = navController,
+                viewModel = adminViewModel,
+                authViewModel = authViewModel,
+                tokenManager = tokenManager
+            )
+        }
+
         composable(Screen.Home) {
             val role = currentRole?.lowercase() ?: authUserRole?.lowercase()
-            if (role != null && role != "kasir" && role != "admin") {
+            if (role == "admin" || role == "guru" || role == "pembina") {
+                AdminDashboardScreen(
+                    navController = navController,
+                    viewModel = adminViewModel,
+                    authViewModel = authViewModel,
+                    tokenManager = tokenManager
+                )
+            } else if (role != null && role != "kasir") {
                 AccessDeniedScreen(
                     userRole = role,
                     onBackToLogin = {
@@ -221,7 +252,7 @@ fun AccessDeniedScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Peran Anda (${userRole ?: "pembeli"}) tidak memiliki akses ke Dashboard Kasir. Hanya akun dengan peran 'kasir' atau 'admin' yang dapat mengakses aplikasi ini.",
+                    text = "Peran Anda (${userRole ?: "pembeli"}) tidak memiliki akses ke Dashboard. Hanya akun dengan peran 'kasir' atau 'admin' yang dapat mengakses aplikasi ini.",
                     fontSize = 13.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center

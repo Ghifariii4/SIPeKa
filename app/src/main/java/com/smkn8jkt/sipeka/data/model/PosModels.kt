@@ -137,3 +137,52 @@ data class OrderItemData(
     val displayPrice: Double
         get() = price ?: priceSnapshot ?: product?.price ?: productSnake?.price ?: 0.0
 }
+
+// Admin Finance Response Models
+data class ProfitResponse(
+    @SerializedName("total_profit") val totalProfit: Double? = 0.0,
+    @SerializedName("school_profit") val schoolProfit: Double? = 0.0,
+    @SerializedName("profit") val profit: Double? = 0.0,
+    @SerializedName("net_profit") val netProfit: Double? = 0.0,
+    @SerializedName("date") val date: String? = null
+) {
+    val effectiveProfit: Double
+        get() = schoolProfit ?: totalProfit ?: profit ?: netProfit ?: 0.0
+}
+
+data class ShiftValidationResponse(
+    @SerializedName("id") val id: String,
+    @SerializedName("kasir_id") val kasirId: String? = null,
+    @SerializedName("kasir_name") val kasirName: String? = null,
+    @SerializedName("kasir") val kasir: UserData? = null,
+    @SerializedName("user") val user: UserData? = null,
+    @SerializedName("start_time") val startTime: String? = null,
+    @SerializedName("end_time") val endTime: String? = null,
+    @SerializedName("clock_out") val clockOut: String? = null,
+    @SerializedName("starting_cash") val startingCash: Double? = null,
+    @SerializedName("expected_cash") val expectedCash: Double? = null,
+    @SerializedName("status") val status: String? = null
+) {
+    val displayKasirName: String
+        get() = kasirName ?: kasir?.name ?: user?.name ?: "Petugas Kasir ${kasirId ?: ""}"
+
+    val displayTime: String
+        get() = endTime ?: clockOut ?: startTime ?: "-"
+}
+
+data class PayoutResponse(
+    @SerializedName("penitip_id") val penitipId: String,
+    @SerializedName("penitip_name") val penitipName: String? = null,
+    @SerializedName("penitip") val penitip: UserData? = null,
+    @SerializedName("total_sales") val totalSales: Double? = null,
+    @SerializedName("net_amount") val netAmount: Double? = null,
+    @SerializedName("payout_amount") val payoutAmount: Double? = null,
+    @SerializedName("total_payout") val totalPayout: Double? = null,
+    @SerializedName("status") val status: String? = null
+) {
+    val displayPenitipName: String
+        get() = penitipName ?: penitip?.name ?: "Penitip ${penitipId}"
+
+    val displayAmount: Double
+        get() = netAmount ?: payoutAmount ?: totalPayout ?: totalSales ?: 0.0
+}
