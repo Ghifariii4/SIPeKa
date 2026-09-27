@@ -103,47 +103,47 @@ fun LiveClockCard() {
     }
 
     val timeFormat = remember { SimpleDateFormat("HH:mm:ss 'WIB'", Locale.getDefault()) }
-    val dateFormat = remember { SimpleDateFormat("EEEE, dd MMMM yyyy", Locale.getDefault()) }
+    val dateFormat = remember { SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault()) }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = PrimaryOrange),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
-                    text = "Jam Real-Time Sistem",
-                    fontSize = 12.sp,
+                    text = "Jam Sistem",
+                    fontSize = 11.sp,
                     color = Color.White.copy(alpha = 0.85f),
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = dateFormat.format(Date(currentTime)),
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
                 )
             }
 
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(8.dp),
                 color = Color.White.copy(alpha = 0.2f)
             ) {
                 Text(
                     text = timeFormat.format(Date(currentTime)),
-                    fontSize = 15.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                 )
             }
         }
@@ -177,6 +177,11 @@ fun ProfilKasirScreen(
         }
     }
 
+    val shiftSales = remember(currentShift, displayModalAwal) {
+        val expected = currentShift?.expectedCash ?: displayModalAwal
+        (expected - displayModalAwal).coerceAtLeast(0.0)
+    }
+
     var showClockOutConfirmDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -185,7 +190,7 @@ fun ProfilKasirScreen(
 
     LaunchedEffect(clockOutSuccess) {
         if (clockOutSuccess) {
-            Toast.makeText(context, "Shift berhasil ditutup (Clock-out)", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Shift berhasil ditutup", Toast.LENGTH_SHORT).show()
             viewModel.resetClockOutState()
             navController.navigate(Screen.Home) {
                 popUpTo(Screen.Home) { inclusive = true }
@@ -240,88 +245,75 @@ fun ProfilKasirScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             LiveClockCard()
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Card Header Profil
+            // Profil Header
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = CardWhite),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp),
+                        .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(56.dp)
+                            .size(48.dp)
                             .clip(CircleShape)
                             .background(PrimaryOrange.copy(alpha = 0.15f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Profil Kasir",
+                            contentDescription = "Profil",
                             tint = PrimaryOrange,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier.size(34.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(14.dp))
 
                     Column {
                         Text(
                             text = "Petugas Kasir 1",
-                            fontSize = 18.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = DarkBrown
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "User ID: ${currentShift?.displayKasirId ?: "-"}",
+                            text = "ID: ${currentShift?.displayKasirId ?: "-"}",
                             fontSize = 12.sp,
                             color = Color.Gray
                         )
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = PrimaryOrange.copy(alpha = 0.12f),
-                            modifier = Modifier.padding(top = 6.dp)
-                        ) {
-                            Text(
-                                text = "Peran: ${userRole?.uppercase() ?: "KASIR"}",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = PrimaryOrange,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
-                            )
-                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Card Status Shift
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = CardWhite),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(20.dp)
+                        .padding(16.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -331,26 +323,26 @@ fun ProfilKasirScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Default.LockClock,
-                                contentDescription = "Shift Status",
+                                contentDescription = "Shift",
                                 tint = DarkBrown,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Status Shift Saat Ini",
-                                fontSize = 16.sp,
+                                text = "Status Shift",
+                                fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = DarkBrown
                             )
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(6.dp),
                             color = if (currentShift?.isShiftActive == true) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
                         ) {
                             Text(
                                 text = if (currentShift?.isShiftActive == true) "SHIFT AKTIF" else "TIDAK AKTIF",
-                                fontSize = 11.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (currentShift?.isShiftActive == true) Color(0xFF2E7D32) else Color(0xFFC62828),
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -358,90 +350,73 @@ fun ProfilKasirScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(12.dp))
                     HorizontalDivider(color = Color(0xFFEEEEEE))
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Waktu Mulai Shift",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = formatShiftTime(currentShift?.displayStartTime),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = DarkBrown
-                        )
-                    }
-
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "Modal Awal (starting_cash)",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = displayModalAwal.toRupiahFormat(),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = DarkBrown
-                        )
+                        Text("Mulai Shift", fontSize = 12.sp, color = Color.Gray)
+                        Text(formatShiftTime(currentShift?.displayStartTime), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = "Estimasi Kas Laci (expected_cash)",
-                            fontSize = 13.sp,
-                            color = Color.Gray
-                        )
-                        Text(
-                            text = (currentShift?.expectedCash ?: 0.0).toRupiahFormat(),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = PrimaryOrange
-                        )
+                        Text("Modal Awal", fontSize = 12.sp, color = Color.Gray)
+                        Text(displayModalAwal.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total Penjualan", fontSize = 12.sp, color = Color.Gray)
+                        Text(shiftSales.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text("Total Kas Laci", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DarkBrown)
+                        Text((currentShift?.expectedCash ?: displayModalAwal).toRupiahFormat(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Tombol Tutup Shift
             Button(
                 onClick = { showClockOutConfirmDialog = true },
                 enabled = !isClockOutLoading && currentShift?.isShiftActive == true,
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.error,
                     contentColor = Color.White
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(46.dp)
             ) {
                 Text(
-                    text = if (isClockOutLoading) "Memproses Clock-out..." else "Tutup Shift (Clock-out)",
-                    fontSize = 15.sp,
+                    text = if (isClockOutLoading) "Memproses..." else "Tutup Shift",
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Tombol Logout
             val scope = rememberCoroutineScope()
@@ -455,32 +430,32 @@ fun ProfilKasirScreen(
                         }
                     }
                 },
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, Color.Gray),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .height(46.dp)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = "Logout",
                     tint = Color.DarkGray,
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(16.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = "Logout Akun Kasir",
-                    fontSize = 15.sp,
+                    text = "Logout",
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.DarkGray
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 
-    // Dialog Konfirmasi & Ringkasan Setoran Shift (Sesuai Activity Diagram)
+    // Dialog Konfirmasi Tutup Shift
     if (showClockOutConfirmDialog) {
         val startingCash = displayModalAwal
         val expectedCash = currentShift?.expectedCash ?: startingCash
@@ -490,65 +465,40 @@ fun ProfilKasirScreen(
             onDismissRequest = { showClockOutConfirmDialog = false },
             title = {
                 Text(
-                    text = "Ringkasan Setoran Shift Kasir",
+                    text = "Tutup Shift Kasir",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    fontSize = 17.sp,
                     color = DarkBrown
                 )
             },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = "Sistem telah menghitung total saldo kas. Silakan verifikasi uang fisik laci kasir:",
-                        fontSize = 12.sp,
-                        color = Color.Gray,
-                        lineHeight = 16.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = SurfaceBeige)
                     ) {
                         Column(modifier = Modifier.padding(12.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Modal Awal (Starting Cash):", fontSize = 12.sp, color = Color.Gray)
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Modal Awal:", fontSize = 12.sp, color = Color.Gray)
                                 Text(startingCash.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("Total Penjualan Shift Ini:", fontSize = 12.sp, color = Color.Gray)
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Penjualan:", fontSize = 12.sp, color = Color.Gray)
                                 Text(shiftSales.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
                             }
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(6.dp))
                             HorizontalDivider(color = Color(0xFFE0E0E0))
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text("TOTAL HARUS DISETOR:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
-                                Text(expectedCash.toRupiahFormat(), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("TOTAL SETORAN:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
+                                Text(expectedCash.toRupiahFormat(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
                             }
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "📌 Harap serahkan uang tunai fisik sejumlah " + expectedCash.toRupiahFormat() + " kepada Guru Pembina.",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = DarkBrown,
-                        lineHeight = 16.sp
-                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text("Serahkan uang tunai fisik sesuai Total Setoran di atas.", fontSize = 11.sp, color = Color.Gray)
                 }
             },
             confirmButton = {
@@ -564,9 +514,7 @@ fun ProfilKasirScreen(
                 }
             },
             dismissButton = {
-                TextButton(
-                    onClick = { showClockOutConfirmDialog = false }
-                ) {
+                TextButton(onClick = { showClockOutConfirmDialog = false }) {
                     Text("Batal", color = Color.Gray)
                 }
             },

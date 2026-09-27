@@ -762,15 +762,15 @@ fun ModernProductCard(
                         onClick = { onAddToCart(product) },
                         enabled = !isOutOfStock,
                         modifier = Modifier
-                            .size(30.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .size(32.dp)
+                            .clip(CircleShape)
                             .background(if (isOutOfStock) Color.LightGray else PrimaryOrange)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Tambah",
                             tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }

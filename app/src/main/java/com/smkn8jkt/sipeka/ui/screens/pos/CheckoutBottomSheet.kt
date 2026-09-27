@@ -446,7 +446,7 @@ fun CartItemRow(
                 OutlinedIconButton(
                     onClick = onDecrease,
                     modifier = Modifier.size(28.dp),
-                    shape = RoundedCornerShape(6.dp)
+                    shape = CircleShape
                 ) {
                     Icon(
                         imageVector = Icons.Default.Remove,
@@ -467,7 +467,7 @@ fun CartItemRow(
                 OutlinedIconButton(
                     onClick = onIncrease,
                     modifier = Modifier.size(28.dp),
-                    shape = RoundedCornerShape(6.dp)
+                    shape = CircleShape
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,

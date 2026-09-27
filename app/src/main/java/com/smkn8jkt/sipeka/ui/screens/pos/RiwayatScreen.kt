@@ -46,7 +46,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -91,7 +90,7 @@ fun formatOrderDate(isoString: String?): String {
 }
 
 fun formatDayGroupHeader(isoString: String?, shiftId: String?): String {
-    if (isoString.isNullOrBlank()) return if (!shiftId.isNullOrBlank()) "Shift #$shiftId" else "Shift Aktif Hari Ini"
+    if (isoString.isNullOrBlank()) return if (!shiftId.isNullOrBlank()) "Shift #$shiftId" else "Shift Aktif"
     return try {
         val inputFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
         inputFormatter.timeZone = TimeZone.getTimeZone("UTC")
@@ -107,7 +106,7 @@ fun formatDayGroupHeader(isoString: String?, shiftId: String?): String {
         val shiftLabel = if (!shiftId.isNullOrBlank()) " • Shift #$shiftId" else ""
         "$dayLabel$shiftLabel"
     } catch (_: Exception) {
-        if (!shiftId.isNullOrBlank()) "Shift #$shiftId" else "Shift Aktif Hari Ini"
+        if (!shiftId.isNullOrBlank()) "Shift #$shiftId" else "Shift Aktif"
     }
 }
 
@@ -126,7 +125,7 @@ fun RiwayatScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilterTab by remember { mutableStateOf("Shift Aktif") }
 
-    val filterTabs = remember { listOf("Semua Riwayat", "Shift Aktif", "Hari Ini") }
+    val filterTabs = remember { listOf("Shift Aktif", "Hari Ini", "Semua") }
 
     LaunchedEffect(Unit) {
         viewModel.fetchHistory()
@@ -222,71 +221,65 @@ fun RiwayatScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "Riwayat Transaksi Kasir",
-                fontSize = 22.sp,
+                text = "Riwayat Transaksi",
+                fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = DarkBrown
             )
 
-            Text(
-                text = "Daftar transaksi terpisah per shift dan hari kasir",
-                fontSize = 13.sp,
-                color = Color.Gray
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Summary Stat Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = CardDefaults.cardColors(containerColor = PrimaryOrange),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(14.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
                         Text(
-                            text = "Total Penjualan ($selectedFilterTab)",
-                            fontSize = 12.sp,
+                            text = "Total Penjualan",
+                            fontSize = 11.sp,
                             color = Color.White.copy(alpha = 0.85f),
                             fontWeight = FontWeight.Medium
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = totalOmzet.toRupiahFormat(),
-                            fontSize = 20.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(10.dp),
                         color = Color.White.copy(alpha = 0.2f)
                     ) {
                         Text(
                             text = "${filteredList.size} Transaksi",
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-            // Filter Chips (Semua / Shift Aktif / Hari Ini)
+            // Filter Chips
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
@@ -309,13 +302,13 @@ fun RiwayatScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
-            // Search Bar Filter ID
+            // Search Bar
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Cari ID Transaksi (#TRX)...", fontSize = 13.sp, color = Color.Gray) },
+                placeholder = { Text("Cari ID Transaksi...", fontSize = 13.sp, color = Color.Gray) },
                 singleLine = true,
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
@@ -334,24 +327,18 @@ fun RiwayatScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Memuat data riwayat dari server...", color = Color.Gray, fontSize = 14.sp)
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Memuat riwayat...", color = Color.Gray, fontSize = 14.sp)
                 }
             } else if (filteredList.isEmpty()) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(56.dp)
                                 .clip(CircleShape)
                                 .background(PrimaryOrange.copy(alpha = 0.12f)),
                             contentAlignment = Alignment.Center
@@ -360,25 +347,14 @@ fun RiwayatScreen(
                                 imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                                 contentDescription = "Empty",
                                 tint = PrimaryOrange,
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(28.dp)
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Belum Ada Transaksi",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = DarkBrown
-                        )
-                        Text(
-                            text = "Tidak ada riwayat transaksi pada filter ini.",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text("Belum Ada Transaksi", fontWeight = FontWeight.Bold, fontSize = 15.sp, color = DarkBrown)
                     }
                 }
             } else {
-                // LIST TERPISAH DAN TERTATA BERDASARKAN SHIFT DAN HARI
                 LazyColumn(
                     contentPadding = PaddingValues(bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -388,25 +364,25 @@ fun RiwayatScreen(
                         item {
                             Surface(
                                 color = PrimaryOrange.copy(alpha = 0.1f),
-                                shape = RoundedCornerShape(10.dp),
+                                shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 6.dp, bottom = 2.dp)
+                                    .padding(top = 4.dp, bottom = 2.dp)
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.CalendarToday,
-                                        contentDescription = "Shift Date",
+                                        contentDescription = "Shift",
                                         tint = PrimaryOrange,
-                                        modifier = Modifier.size(16.dp)
+                                        modifier = Modifier.size(14.dp)
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = headerTitle,
-                                        fontSize = 13.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = DarkBrown
                                     )
@@ -426,7 +402,7 @@ fun RiwayatScreen(
         }
     }
 
-    // DIALOG DETAIL TRANSAKSI LENGKAP
+    // DIALOG DETAIL TRANSAKSI
     selectedDetail?.let { order ->
         OrderDetailDialog(
             order = order,
@@ -445,14 +421,14 @@ fun TransactionHistoryCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = CardWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(14.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -464,35 +440,35 @@ fun TransactionHistoryCard(
                         imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                         contentDescription = "Order ID",
                         tint = PrimaryOrange,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(18.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "#${order.id ?: "-"}",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp,
+                        fontSize = 14.sp,
                         color = DarkBrown
                     )
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(6.dp),
                     color = Color(0xFFE8F5E9)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Success",
                             tint = Color(0xFF2E7D32),
-                            modifier = Modifier.size(12.dp)
+                            modifier = Modifier.size(10.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = (order.status ?: "COMPLETED").uppercase(),
-                            fontSize = 10.sp,
+                            fontSize = 9.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF2E7D32)
                         )
@@ -500,15 +476,15 @@ fun TransactionHistoryCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = formatOrderDate(order.displayCreatedAt),
-                fontSize = 12.sp,
+                fontSize = 11.sp,
                 color = Color.Gray
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -516,15 +492,15 @@ fun TransactionHistoryCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Klik untuk lihat rincian produk",
-                    fontSize = 12.sp,
+                    text = "Klik rincian",
+                    fontSize = 11.sp,
                     color = PrimaryOrange,
                     fontWeight = FontWeight.Medium
                 )
 
                 Text(
                     text = (order.totalAmount ?: 0.0).toRupiahFormat(),
-                    fontSize = 16.sp,
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                     color = PrimaryOrange
                 )
@@ -533,7 +509,6 @@ fun TransactionHistoryCard(
     }
 }
 
-// COMPOSABLE DIALOG DETAIL TRANSAKSI
 @Composable
 fun OrderDetailDialog(
     order: OrderData,
@@ -553,17 +528,17 @@ fun OrderDetailDialog(
                         imageVector = Icons.Default.Receipt,
                         contentDescription = "Detail",
                         tint = PrimaryOrange,
-                        modifier = Modifier.size(24.dp)
+                        modifier = Modifier.size(22.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = "Detail Transaksi",
                         fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
+                        fontSize = 16.sp,
                         color = DarkBrown
                     )
                 }
-                IconButton(onClick = onDismiss) {
+                IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
                     Icon(Icons.Default.Clear, contentDescription = "Close", tint = Color.Gray)
                 }
             }
@@ -571,50 +546,45 @@ fun OrderDetailDialog(
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = SurfaceBeige,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(12.dp)) {
+                    Column(modifier = Modifier.padding(10.dp)) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("ID Order:", fontSize = 12.sp, color = Color.Gray)
-                            Text("#${order.id ?: "-"}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DarkBrown)
+                            Text("ID Order:", fontSize = 11.sp, color = Color.Gray)
+                            Text("#${order.id ?: "-"}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = DarkBrown)
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(2.dp))
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Waktu Transaksi:", fontSize = 12.sp, color = Color.Gray)
-                            Text(formatOrderDate(order.displayCreatedAt), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("Shift ID / Tipe:", fontSize = 12.sp, color = Color.Gray)
-                            Text("Shift #${order.shiftId ?: "Aktif"} • ${order.orderType ?: "POS Direct"}", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = DarkBrown)
+                            Text("Waktu:", fontSize = 11.sp, color = Color.Gray)
+                            Text(formatOrderDate(order.displayCreatedAt), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Text(
-                    text = "Rincian Item Produk:",
-                    fontSize = 13.sp,
+                    text = "Rincian Item:",
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = DarkBrown
                 )
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
                 val displayItems = order.displayItems
                 if (isLoading) {
-                    Box(modifier = Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = PrimaryOrange, modifier = Modifier.size(24.dp))
+                    Box(modifier = Modifier.fillMaxWidth().height(60.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = PrimaryOrange, modifier = Modifier.size(20.dp))
                     }
                 } else if (displayItems.isEmpty()) {
                     Text(
-                        text = "Detail item tidak tersedia untuk transaksi ini.",
+                        text = "Detail item tidak tersedia",
                         fontSize = 12.sp,
                         color = Color.Gray,
-                        modifier = Modifier.padding(vertical = 12.dp)
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 } else {
                     Card(
@@ -622,7 +592,7 @@ fun OrderDetailDialog(
                         colors = CardDefaults.cardColors(containerColor = CardWhite),
                         border = BorderStroke(1.dp, Color(0xFFEEEEEE))
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                        Column(modifier = Modifier.padding(10.dp)) {
                             displayItems.forEachIndexed { index, item ->
                                 val price = item.displayPrice
                                 val qty = item.quantity ?: 1
@@ -635,7 +605,7 @@ fun OrderDetailDialog(
                                     Column(modifier = Modifier.weight(1f)) {
                                         Text(
                                             text = item.displayProductName,
-                                            fontSize = 13.sp,
+                                            fontSize = 12.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = DarkBrown
                                         )
@@ -647,44 +617,44 @@ fun OrderDetailDialog(
                                     }
                                     Text(
                                         text = subtotal.toRupiahFormat(),
-                                        fontSize = 13.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = PrimaryOrange
                                     )
                                 }
                                 if (index < displayItems.size - 1) {
-                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp), color = Color(0xFFF0F0F0))
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 6.dp), color = Color(0xFFF0F0F0))
                                 }
                             }
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(14.dp))
-                HorizontalDivider(color = Color(0xFFE0E0E0))
                 Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = Color(0xFFE0E0E0))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Total Pembayaran:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = DarkBrown)
-                    Text((order.totalAmount ?: 0.0).toRupiahFormat(), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
+                    Text("Total:", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = DarkBrown)
+                    Text((order.totalAmount ?: 0.0).toRupiahFormat(), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(8.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Tutup Detail", fontWeight = FontWeight.Bold)
+                Text("Tutup", fontWeight = FontWeight.Bold)
             }
         },
         containerColor = CardWhite,
-        shape = RoundedCornerShape(20.dp)
+        shape = RoundedCornerShape(16.dp)
     )
 }
