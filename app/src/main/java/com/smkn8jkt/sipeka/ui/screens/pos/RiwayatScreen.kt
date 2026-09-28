@@ -660,11 +660,15 @@ fun RiwayatScreen(
                         }
 
                         items(ordersInGroup, key = { it.id ?: "" }) { order ->
+                            val shortId = order.id?.take(8)?.uppercase() ?: "-"
+                            val isCompleted = (order.status ?: "").equals("COMPLETED", ignoreCase = true) ||
+                                    (order.status ?: "").equals("SUKSES", ignoreCase = true)
+
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { viewModel.selectOrderForDetail(order) },
-                                shape = RoundedCornerShape(14.dp),
+                                shape = RoundedCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
                                 border = BorderStroke(1.dp, BorderStitch),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -672,44 +676,50 @@ fun RiwayatScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(12.dp)
+                                        .padding(horizontal = 14.dp, vertical = 10.dp)
                                 ) {
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        // Potong UUID agar tidak wrap — tampilkan 8 char saja
-                                        val shortId = order.id?.take(8)?.uppercase() ?: "-"
-                                        Text(
-                                            text = "#$shortId…",
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 11.sp,
-                                            color = TextMuted,
-                                            maxLines = 1
-                                        )
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = BgWarmTan.copy(alpha = 0.35f)
+                                            ) {
+                                                Text(
+                                                    text = "#$shortId",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = BtnDarkChocolate,
+                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                                )
+                                            }
+
+                                            Text(
+                                                text = formatOrderDate(order.displayCreatedAt),
+                                                fontSize = 11.sp,
+                                                color = TextMuted
+                                            )
+                                        }
 
                                         Surface(
                                             shape = RoundedCornerShape(6.dp),
-                                            color = GreenSuccessContainer
+                                            color = if (isCompleted) GreenSuccessContainer else BgWarmTan.copy(alpha = 0.3f)
                                         ) {
                                             Text(
-                                                text = (order.status ?: "SUKSES").uppercase(),
+                                                text = if (isCompleted) "SUKSES" else (order.status ?: "SELESAI").uppercase(),
                                                 fontSize = 9.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = GreenSuccess,
+                                                color = if (isCompleted) GreenSuccess else BtnDarkChocolate,
                                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                             )
                                         }
                                     }
-
-                                    Spacer(modifier = Modifier.height(4.dp))
-
-                                    Text(
-                                        text = formatOrderDate(order.displayCreatedAt),
-                                        fontSize = 11.sp,
-                                        color = TextMuted
-                                    )
 
                                     Spacer(modifier = Modifier.height(8.dp))
 
