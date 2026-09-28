@@ -229,7 +229,7 @@ class AdminViewModel(
                         val fallbackList = listOf(
                             PayoutResponse(
                                 penitipId = "PENITIP-01",
-                                penitipName = "Siswa Penitip (Kantin)",
+                                penitipName = "Siswa Penitip (Toko PKK)",
                                 totalSales = totalSales,
                                 netAmount = totalSales * 0.90, // 90% hak penitip setelah margin 10%
                                 status = "pending"

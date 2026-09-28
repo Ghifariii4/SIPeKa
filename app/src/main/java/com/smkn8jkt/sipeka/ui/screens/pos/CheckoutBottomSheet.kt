@@ -66,12 +66,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.smkn8jkt.sipeka.data.model.CartItem
 import com.smkn8jkt.sipeka.ui.components.PrimaryButton
-import com.smkn8jkt.sipeka.ui.theme.BackgroundNeutral
-import com.smkn8jkt.sipeka.ui.theme.PrimaryBrown
-import com.smkn8jkt.sipeka.ui.theme.SecondaryBrown
-
-private val DarkBrown = Color(0xFF3E2723)
-private val PrimaryOrange = Color(0xFFFF7043)
+import com.smkn8jkt.sipeka.ui.theme.BgDarkEspresso
+import com.smkn8jkt.sipeka.ui.theme.BgWarmTan
+import com.smkn8jkt.sipeka.ui.theme.BtnCreamWhite
+import com.smkn8jkt.sipeka.ui.theme.BtnDarkChocolate
+import com.smkn8jkt.sipeka.ui.theme.BtnMocha
+import com.smkn8jkt.sipeka.ui.theme.CardCreamWhite
+import com.smkn8jkt.sipeka.ui.theme.GreenSuccess
+import com.smkn8jkt.sipeka.ui.theme.GreenSuccessContainer
+import com.smkn8jkt.sipeka.ui.theme.OutlineWarm
+import com.smkn8jkt.sipeka.ui.theme.RedError
+import com.smkn8jkt.sipeka.ui.theme.RedErrorContainer
+import com.smkn8jkt.sipeka.ui.theme.TextDark
+import com.smkn8jkt.sipeka.ui.theme.TextMedium
+import com.smkn8jkt.sipeka.ui.theme.TextMuted
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -109,8 +117,8 @@ fun CheckoutBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = BackgroundNeutral,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        containerColor = CardCreamWhite,
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
     ) {
         Column(
             modifier = Modifier
@@ -125,30 +133,37 @@ fun CheckoutBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.ShoppingCart,
-                        contentDescription = "Keranjang",
-                        tint = PrimaryBrown,
-                        modifier = Modifier.size(22.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(CircleShape)
+                            .background(BgWarmTan.copy(alpha = 0.4f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Keranjang",
+                            tint = BtnDarkChocolate,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = "Keranjang Belanja",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = SecondaryBrown,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextDark,
                         fontSize = 18.sp
                     )
                 }
                 Text(
                     text = "$totalCount Item",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Gray
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BtnMocha
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Cart Items List
             if (cartItems.isEmpty()) {
@@ -156,7 +171,7 @@ fun CheckoutBottomSheet(
                     modifier = Modifier.fillMaxWidth().padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Keranjang kosong", color = Color.Gray, fontSize = 13.sp)
+                    Text("Keranjang kosong", color = TextMuted, fontSize = 13.sp)
                 }
             } else {
                 LazyColumn(
@@ -175,7 +190,7 @@ fun CheckoutBottomSheet(
             }
 
             Spacer(modifier = Modifier.height(10.dp))
-            HorizontalDivider(color = Color(0xFFE0E0E0))
+            HorizontalDivider(color = OutlineWarm.copy(alpha = 0.4f))
             Spacer(modifier = Modifier.height(10.dp))
 
             // Total Summary
@@ -186,27 +201,26 @@ fun CheckoutBottomSheet(
             ) {
                 Text(
                     text = "Total Pembayaran",
-                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
-                    color = SecondaryBrown
+                    color = TextMedium,
+                    fontSize = 15.sp
                 )
                 Text(
                     text = totalPrice.toRupiahFormat(),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = PrimaryBrown,
-                    fontSize = 18.sp
+                    fontWeight = FontWeight.ExtraBold,
+                    color = BtnDarkChocolate,
+                    fontSize = 20.sp
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Input Cash Received
             Text(
                 text = "Uang Diterima (Rp)",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = DarkBrown
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextDark
             )
 
             Spacer(modifier = Modifier.height(6.dp))
@@ -214,27 +228,30 @@ fun CheckoutBottomSheet(
             OutlinedTextField(
                 value = cashReceivedInput,
                 onValueChange = { cashReceivedInput = it.filter { char -> char.isDigit() } },
-                placeholder = { Text("Nominal Tunai", fontSize = 13.sp, color = Color.Gray) },
+                placeholder = { Text("Nominal Tunai", fontSize = 13.sp, color = TextMuted.copy(alpha = 0.7f)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.PointOfSale,
                         contentDescription = "Cash",
-                        tint = PrimaryBrown
+                        tint = BtnMocha
                     )
                 },
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White,
-                    focusedBorderColor = PrimaryBrown,
-                    unfocusedBorderColor = Color(0xFFCCCCCC)
+                    focusedTextColor = TextDark,
+                    unfocusedTextColor = TextDark,
+                    focusedContainerColor = CardCreamWhite,
+                    unfocusedContainerColor = CardCreamWhite,
+                    focusedBorderColor = BtnDarkChocolate,
+                    unfocusedBorderColor = OutlineWarm,
+                    cursorColor = BtnDarkChocolate
                 ),
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Quick Preset Chips
             val quickNominals = remember(totalPrice) {
@@ -245,7 +262,7 @@ fun CheckoutBottomSheet(
             }
 
             LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(quickNominals) { nominal ->
@@ -255,56 +272,56 @@ fun CheckoutBottomSheet(
                     OutlinedButton(
                         onClick = { cashReceivedInput = nominal.toLong().toString() },
                         shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, PrimaryBrown),
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                        modifier = Modifier.height(30.dp)
+                        border = BorderStroke(1.2.dp, BtnMocha),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                        modifier = Modifier.height(32.dp)
                     ) {
                         Text(
                             text = label,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold,
-                            color = PrimaryBrown
+                            color = BtnDarkChocolate
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Kembalian
             if (cashReceived > 0) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(
-                        containerColor = if (changeAmount >= 0) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                        containerColor = if (changeAmount >= 0) GreenSuccessContainer else RedErrorContainer
                     )
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
                             text = if (changeAmount >= 0) "Kembalian:" else "Uang Kurang:",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = if (changeAmount >= 0) Color(0xFF2E7D32) else Color(0xFFC62828)
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (changeAmount >= 0) GreenSuccess else RedError
                         )
                         Text(
                             text = if (changeAmount >= 0) changeAmount.toRupiahFormat() else (totalPrice - cashReceived).toRupiahFormat(),
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (changeAmount >= 0) Color(0xFF2E7D32) else Color(0xFFC62828)
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = if (changeAmount >= 0) GreenSuccess else RedError
                         )
                     }
                 }
             }
 
             if (!errorMessage.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = errorMessage ?: "",
                     color = MaterialTheme.colorScheme.error,
@@ -314,7 +331,7 @@ fun CheckoutBottomSheet(
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             PrimaryButton(
                 text = "BAYAR & SELESAI",
@@ -339,24 +356,24 @@ fun CheckoutBottomSheet(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(54.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFFE8F5E9)),
+                            .background(GreenSuccessContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = "Success",
-                            tint = Color(0xFF2E7D32),
-                            modifier = Modifier.size(30.dp)
+                            tint = GreenSuccess,
+                            modifier = Modifier.size(34.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                     Text(
                         text = "Transaksi Berhasil!",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 17.sp,
-                        color = DarkBrown,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 18.sp,
+                        color = TextDark,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -364,26 +381,27 @@ fun CheckoutBottomSheet(
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Total:", fontSize = 12.sp, color = Color.Gray)
-                        Text(lastPaidTotal.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DarkBrown)
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Diterima:", fontSize = 12.sp, color = Color.Gray)
-                        Text(lastCashReceived.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
+                        Text("Total Tagihan:", fontSize = 13.sp, color = TextMuted)
+                        Text(lastPaidTotal.toRupiahFormat(), fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextDark)
                     }
                     Spacer(modifier = Modifier.height(6.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Uang Diterima:", fontSize = 13.sp, color = TextMuted)
+                        Text(lastCashReceived.toRupiahFormat(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFFE8F5E9),
+                        shape = RoundedCornerShape(10.dp),
+                        color = GreenSuccessContainer,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("KEMBALIAN:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
-                            Text(lastChangeAmount.toRupiahFormat(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Color(0xFF2E7D32))
+                            Text("KEMBALIAN:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = GreenSuccess)
+                            Text(lastChangeAmount.toRupiahFormat(), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = GreenSuccess)
                         }
                     }
                 }
@@ -395,15 +413,15 @@ fun CheckoutBottomSheet(
                         viewModel.resetCheckoutState()
                         onDismiss()
                     },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryOrange),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate, contentColor = BtnCreamWhite),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Transaksi Baru", fontWeight = FontWeight.Bold)
+                    Text("Transaksi Baru", fontWeight = FontWeight.Bold, color = BtnCreamWhite)
                 }
             },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(18.dp)
+            containerColor = CardCreamWhite,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 }
@@ -417,8 +435,9 @@ fun CartItemRow(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
+        border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.4f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -433,12 +452,12 @@ fun CartItemRow(
                     text = cartItem.product.name,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,
-                    color = SecondaryBrown
+                    color = TextDark
                 )
                 Text(
                     text = "${cartItem.product.price.toRupiahFormat()} x ${cartItem.quantity} = ${cartItem.subtotal.toRupiahFormat()}",
                     fontSize = 11.sp,
-                    color = Color.Gray
+                    color = TextMuted
                 )
             }
 
@@ -446,13 +465,14 @@ fun CartItemRow(
                 OutlinedIconButton(
                     onClick = onDecrease,
                     modifier = Modifier.size(28.dp),
-                    shape = CircleShape
+                    shape = CircleShape,
+                    border = BorderStroke(1.dp, BtnMocha)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Remove,
                         contentDescription = "Kurangi",
                         modifier = Modifier.size(14.dp),
-                        tint = PrimaryBrown
+                        tint = BtnDarkChocolate
                     )
                 }
 
@@ -460,20 +480,21 @@ fun CartItemRow(
                     text = cartItem.quantity.toString(),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = SecondaryBrown,
+                    color = TextDark,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
 
                 OutlinedIconButton(
                     onClick = onIncrease,
                     modifier = Modifier.size(28.dp),
-                    shape = CircleShape
+                    shape = CircleShape,
+                    border = BorderStroke(1.dp, BtnMocha)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
                         contentDescription = "Tambah",
                         modifier = Modifier.size(14.dp),
-                        tint = PrimaryBrown
+                        tint = BtnDarkChocolate
                     )
                 }
 
@@ -486,7 +507,7 @@ fun CartItemRow(
                     Icon(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Hapus",
-                        tint = MaterialTheme.colorScheme.error,
+                        tint = RedError,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -494,3 +515,4 @@ fun CartItemRow(
         }
     }
 }
+

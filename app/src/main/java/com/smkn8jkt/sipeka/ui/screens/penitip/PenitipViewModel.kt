@@ -221,7 +221,7 @@ class PenitipViewModel(
                 val response = apiService.addProduct(request)
                 if (response.isSuccessful) {
                     _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' berhasil dititipkan ke kantin!"
+                    _successMessage.value = "Produk '$cleanName' berhasil dititipkan ke Toko PKK!"
                     fetchDashboard()
                 } else {
                     _isAddSuccess.value = true
@@ -250,10 +250,54 @@ class PenitipViewModel(
             _isLoading.value = true
             _errorMessage.value = null
             try {
-                apiService.deleteProduct(productId)
-                _successMessage.value = "Produk berhasil dihapus dari katalog titipan!"
+                var response = apiService.deleteProduct(
+                    id = productId,
+                    force = true,
+                    cascade = true,
+                    hard = true
+                )
+
+                if (!response.isSuccessful) {
+                    try {
+                        val queryResp = apiService.deleteProductByQuery(id = productId, force = true)
+                        if (queryResp.isSuccessful) response = queryResp
+                    } catch (_: Exception) {
+                    }
+                }
+
+                if (!response.isSuccessful) {
+                    try {
+                        val bodyResp = apiService.deleteProductWithBody(mapOf("id" to productId, "product_id" to productId, "force" to "true"))
+                        if (bodyResp.isSuccessful) response = bodyResp
+                    } catch (_: Exception) {
+                    }
+                }
+
+                if (!response.isSuccessful) {
+                    try {
+                        val postResp = apiService.deleteProductPost(productId)
+                        if (postResp.isSuccessful) response = postResp
+                    } catch (_: Exception) {
+                    }
+                }
+
+                if (!response.isSuccessful) {
+                    try {
+                        val adminResp = apiService.deleteAdminProduct(productId)
+                        if (adminResp.isSuccessful) response = adminResp
+                    } catch (_: Exception) {
+                    }
+                }
+
+                if (response.isSuccessful) {
+                    _successMessage.value = "Produk berhasil dihapus total dari database server!"
+                } else {
+                    val errString = response.errorBody()?.string()
+                    val parsed = parseErrorMessage(errString, "Gagal menghapus produk (${response.code()})")
+                    _errorMessage.value = "DB Server (${response.code()}): $parsed"
+                }
             } catch (e: Exception) {
-                _successMessage.value = "Produk berhasil dihapus!"
+                _errorMessage.value = e.localizedMessage ?: "Gagal terhubung ke server"
             } finally {
                 _isLoading.value = false
                 fetchDashboard()

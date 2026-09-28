@@ -72,10 +72,22 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-private val DarkBrown = Color(0xFF3E2723)
-private val PrimaryOrange = Color(0xFFFF7043)
-private val SurfaceBeige = Color(0xFFFAF7F4)
-private val CardWhite = Color(0xFFFFFFFF)
+import com.smkn8jkt.sipeka.ui.theme.BgDarkEspresso
+import com.smkn8jkt.sipeka.ui.theme.BgWarmTan
+import com.smkn8jkt.sipeka.ui.theme.BtnCreamWhite
+import com.smkn8jkt.sipeka.ui.theme.BtnDarkChocolate
+import com.smkn8jkt.sipeka.ui.theme.BtnMocha
+import com.smkn8jkt.sipeka.ui.theme.CardCreamWhite
+import com.smkn8jkt.sipeka.ui.theme.GreenSuccess
+import com.smkn8jkt.sipeka.ui.theme.GreenSuccessContainer
+import com.smkn8jkt.sipeka.ui.theme.OutlineWarm
+import com.smkn8jkt.sipeka.ui.theme.RedError
+import com.smkn8jkt.sipeka.ui.theme.RedErrorContainer
+import com.smkn8jkt.sipeka.ui.theme.SipekaTheme
+import com.smkn8jkt.sipeka.ui.theme.TextDark
+import com.smkn8jkt.sipeka.ui.theme.TextLight
+import com.smkn8jkt.sipeka.ui.theme.TextMedium
+import com.smkn8jkt.sipeka.ui.theme.TextMuted
 
 fun formatShiftTime(isoString: String?): String {
     if (isoString.isNullOrBlank()) return "-"
@@ -107,43 +119,43 @@ fun LiveClockCard() {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = PrimaryOrange),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = BgDarkEspresso),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
                 Text(
-                    text = "Jam Sistem",
-                    fontSize = 11.sp,
-                    color = Color.White.copy(alpha = 0.85f),
+                    text = "Jam Sistem PKK",
+                    fontSize = 12.sp,
+                    color = BgWarmTan,
                     fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(3.dp))
                 Text(
                     text = dateFormat.format(Date(currentTime)),
-                    fontSize = 12.sp,
-                    color = Color.White,
+                    fontSize = 13.sp,
+                    color = BtnCreamWhite,
                     fontWeight = FontWeight.SemiBold
                 )
             }
 
             Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = Color.White.copy(alpha = 0.2f)
+                shape = RoundedCornerShape(10.dp),
+                color = BtnMocha.copy(alpha = 0.4f)
             ) {
                 Text(
                     text = timeFormat.format(Date(currentTime)),
                     fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    fontWeight = FontWeight.ExtraBold,
+                    color = BtnCreamWhite,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                 )
             }
         }
@@ -164,7 +176,6 @@ fun ProfilKasirScreen(
     val startingCashState by viewModel.startingCashState.collectAsState()
     val isClockOutLoading by viewModel.isClockOutLoading.collectAsState()
     val clockOutSuccess by viewModel.clockOutSuccess.collectAsState()
-    val userRole by authViewModel?.userRole?.collectAsState() ?: remember { mutableStateOf("kasir") }
 
     val displayModalAwal = remember(currentShift, startingCashState) {
         val shiftStartingCash = currentShift?.startingCash
@@ -199,43 +210,118 @@ fun ProfilKasirScreen(
     }
 
     Scaffold(
-        containerColor = SurfaceBeige,
+        containerColor = com.smkn8jkt.sipeka.ui.theme.BgLightCanvas,
+        topBar = {
+            Surface(
+                color = BgDarkEspresso,
+                shadowElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(BtnMocha),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "PKK",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Black,
+                                color = BtnCreamWhite
+                            )
+                        }
+
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "Profil Kasir",
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextLight
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(4.dp),
+                                    color = BgWarmTan
+                                ) {
+                                    Text(
+                                        text = "KASIR",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        color = BtnDarkChocolate,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
+                            Text(
+                                text = "Toko PKK SMKN 8 Jakarta",
+                                fontSize = 11.sp,
+                                color = BgWarmTan.copy(alpha = 0.85f)
+                            )
+                        }
+                    }
+                }
+            }
+        },
         bottomBar = {
             NavigationBar(
-                containerColor = CardWhite,
-                tonalElevation = 8.dp
+                containerColor = CardCreamWhite,
+                tonalElevation = 8.dp,
+                modifier = Modifier.height(64.dp)
             ) {
                 NavigationBarItem(
                     selected = false,
                     onClick = { navController.navigate(Screen.Home) },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Beranda") },
-                    label = { Text("Beranda", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
+                    icon = { Icon(Icons.Default.Home, contentDescription = "Beranda", modifier = Modifier.size(22.dp)) },
+                    label = { Text("Beranda", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                     colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
+                        selectedIconColor = BtnDarkChocolate,
+                        selectedTextColor = BtnDarkChocolate,
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted,
+                        indicatorColor = com.smkn8jkt.sipeka.ui.theme.SegmentBg
                     )
                 )
 
                 NavigationBarItem(
                     selected = false,
                     onClick = { navController.navigate(Screen.History) },
-                    icon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = "Riwayat") },
-                    label = { Text("Riwayat", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
+                    icon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = "Riwayat", modifier = Modifier.size(22.dp)) },
+                    label = { Text("Riwayat", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                     colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = Color.Gray,
-                        unselectedTextColor = Color.Gray
+                        selectedIconColor = BtnDarkChocolate,
+                        selectedTextColor = BtnDarkChocolate,
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted,
+                        indicatorColor = com.smkn8jkt.sipeka.ui.theme.SegmentBg
                     )
                 )
 
                 NavigationBarItem(
                     selected = true,
                     onClick = { },
-                    icon = { Icon(Icons.Default.Person, contentDescription = "Profil") },
-                    label = { Text("Profil", fontSize = 11.sp, fontWeight = FontWeight.Medium) },
+                    icon = { Icon(Icons.Default.Person, contentDescription = "Profil", modifier = Modifier.size(22.dp)) },
+                    label = { Text("Profil", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
                     colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PrimaryOrange,
-                        selectedTextColor = PrimaryOrange,
-                        indicatorColor = PrimaryOrange.copy(alpha = 0.12f)
+                        selectedIconColor = BtnDarkChocolate,
+                        selectedTextColor = BtnDarkChocolate,
+                        unselectedIconColor = TextMuted,
+                        unselectedTextColor = TextMuted,
+                        indicatorColor = com.smkn8jkt.sipeka.ui.theme.SegmentBg
                     )
                 )
             }
@@ -250,16 +336,25 @@ fun ProfilKasirScreen(
         ) {
             Spacer(modifier = Modifier.height(14.dp))
 
+            Text(
+                text = "Profil Kasir",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = TextDark
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
             LiveClockCard()
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Profil Header
+            // Profil Header Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -269,16 +364,16 @@ fun ProfilKasirScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(52.dp)
                             .clip(CircleShape)
-                            .background(PrimaryOrange.copy(alpha = 0.15f)),
+                            .background(BgWarmTan.copy(alpha = 0.4f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.AccountCircle,
                             contentDescription = "Profil",
-                            tint = PrimaryOrange,
-                            modifier = Modifier.size(34.dp)
+                            tint = BtnDarkChocolate,
+                            modifier = Modifier.size(36.dp)
                         )
                     }
 
@@ -287,15 +382,15 @@ fun ProfilKasirScreen(
                     Column {
                         Text(
                             text = "Petugas Kasir 1",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = DarkBrown
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            color = TextDark
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = "ID: ${currentShift?.displayKasirId ?: "-"}",
                             fontSize = 12.sp,
-                            color = Color.Gray
+                            color = TextMuted
                         )
                     }
                 }
@@ -306,9 +401,9 @@ fun ProfilKasirScreen(
             // Card Status Shift
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = CardWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -324,42 +419,42 @@ fun ProfilKasirScreen(
                             Icon(
                                 imageVector = Icons.Default.LockClock,
                                 contentDescription = "Shift",
-                                tint = DarkBrown,
+                                tint = BtnDarkChocolate,
                                 modifier = Modifier.size(20.dp)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Status Shift",
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = DarkBrown
+                                color = TextDark
                             )
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = if (currentShift?.isShiftActive == true) Color(0xFFE8F5E9) else Color(0xFFFFEBEE)
+                            shape = RoundedCornerShape(8.dp),
+                            color = if (currentShift?.isShiftActive == true) GreenSuccessContainer else RedErrorContainer
                         ) {
                             Text(
                                 text = if (currentShift?.isShiftActive == true) "SHIFT AKTIF" else "TIDAK AKTIF",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = if (currentShift?.isShiftActive == true) Color(0xFF2E7D32) else Color(0xFFC62828),
+                                color = if (currentShift?.isShiftActive == true) GreenSuccess else RedError,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
-                    HorizontalDivider(color = Color(0xFFEEEEEE))
+                    HorizontalDivider(color = OutlineWarm.copy(alpha = 0.4f))
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Mulai Shift", fontSize = 12.sp, color = Color.Gray)
-                        Text(formatShiftTime(currentShift?.displayStartTime), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
+                        Text("Mulai Shift", fontSize = 13.sp, color = TextMuted)
+                        Text(formatShiftTime(currentShift?.displayStartTime), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -368,8 +463,8 @@ fun ProfilKasirScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Modal Awal", fontSize = 12.sp, color = Color.Gray)
-                        Text(displayModalAwal.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
+                        Text("Modal Awal", fontSize = 13.sp, color = TextMuted)
+                        Text(displayModalAwal.toRupiahFormat(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -378,8 +473,8 @@ fun ProfilKasirScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Total Penjualan", fontSize = 12.sp, color = Color.Gray)
-                        Text(shiftSales.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
+                        Text("Total Penjualan", fontSize = 13.sp, color = TextMuted)
+                        Text(shiftSales.toRupiahFormat(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -388,35 +483,37 @@ fun ProfilKasirScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Total Kas Laci", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = DarkBrown)
-                        Text((currentShift?.expectedCash ?: displayModalAwal).toRupiahFormat(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
+                        Text("Total Kas Laci", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                        Text((currentShift?.expectedCash ?: displayModalAwal).toRupiahFormat(), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = BtnDarkChocolate)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(18.dp))
 
             // Tombol Tutup Shift
             Button(
                 onClick = { showClockOutConfirmDialog = true },
                 enabled = !isClockOutLoading && currentShift?.isShiftActive == true,
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error,
-                    contentColor = Color.White
+                    containerColor = BtnDarkChocolate,
+                    contentColor = BtnCreamWhite,
+                    disabledContainerColor = BtnDarkChocolate.copy(alpha = 0.5f)
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(46.dp)
+                    .height(50.dp)
             ) {
                 Text(
                     text = if (isClockOutLoading) "Memproses..." else "Tutup Shift",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BtnCreamWhite
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Tombol Logout
             val scope = rememberCoroutineScope()
@@ -430,24 +527,24 @@ fun ProfilKasirScreen(
                         }
                     }
                 },
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, Color.Gray),
+                shape = RoundedCornerShape(14.dp),
+                border = BorderStroke(1.5.dp, BtnMocha),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(46.dp)
+                    .height(50.dp)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
                     contentDescription = "Logout",
-                    tint = Color.DarkGray,
-                    modifier = Modifier.size(16.dp)
+                    tint = BtnDarkChocolate,
+                    modifier = Modifier.size(18.dp)
                 )
-                Spacer(modifier = Modifier.width(6.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "Logout",
-                    fontSize = 14.sp,
+                    text = "Keluar / Logout",
+                    fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color.DarkGray
+                    color = BtnDarkChocolate
                 )
             }
 
@@ -459,46 +556,46 @@ fun ProfilKasirScreen(
     if (showClockOutConfirmDialog) {
         val startingCash = displayModalAwal
         val expectedCash = currentShift?.expectedCash ?: startingCash
-        val shiftSales = (expectedCash - startingCash).coerceAtLeast(0.0)
+        val sales = (expectedCash - startingCash).coerceAtLeast(0.0)
 
         AlertDialog(
             onDismissRequest = { showClockOutConfirmDialog = false },
             title = {
                 Text(
-                    text = "Tutup Shift Kasir",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp,
-                    color = DarkBrown
+                    text = "Konfirmasi Tutup Shift",
+                    fontWeight = FontWeight.ExtraBold,
+                    fontSize = 18.sp,
+                    color = TextDark
                 )
             },
             text = {
                 Column(modifier = Modifier.fillMaxWidth()) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = SurfaceBeige)
+                        colors = CardDefaults.cardColors(containerColor = BgWarmTan.copy(alpha = 0.35f))
                     ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
+                        Column(modifier = Modifier.padding(14.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Modal Awal:", fontSize = 12.sp, color = Color.Gray)
-                                Text(startingCash.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
+                                Text("Modal Awal:", fontSize = 12.sp, color = TextMuted)
+                                Text(startingCash.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                             }
                             Spacer(modifier = Modifier.height(4.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Penjualan:", fontSize = 12.sp, color = Color.Gray)
-                                Text(shiftSales.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = DarkBrown)
+                                Text("Penjualan:", fontSize = 12.sp, color = TextMuted)
+                                Text(sales.toRupiahFormat(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                             }
                             Spacer(modifier = Modifier.height(6.dp))
-                            HorizontalDivider(color = Color(0xFFE0E0E0))
+                            HorizontalDivider(color = OutlineWarm.copy(alpha = 0.4f))
                             Spacer(modifier = Modifier.height(6.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("TOTAL SETORAN:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
-                                Text(expectedCash.toRupiahFormat(), fontSize = 14.sp, fontWeight = FontWeight.Bold, color = PrimaryOrange)
+                                Text("TOTAL SETORAN:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BtnDarkChocolate)
+                                Text(expectedCash.toRupiahFormat(), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = BtnDarkChocolate)
                             }
                         }
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))
-                    Text("Serahkan uang tunai fisik sesuai Total Setoran di atas.", fontSize = 11.sp, color = Color.Gray)
+                    Text("Serahkan uang tunai fisik sesuai Total Setoran di atas kepada Guru Pembina.", fontSize = 12.sp, color = TextMuted)
                 }
             },
             confirmButton = {
@@ -507,19 +604,20 @@ fun ProfilKasirScreen(
                         showClockOutConfirmDialog = false
                         viewModel.clockOut()
                     },
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate, contentColor = BtnCreamWhite)
                 ) {
-                    Text("Setor & Tutup Shift", fontWeight = FontWeight.Bold)
+                    Text("Setor & Tutup Shift", fontWeight = FontWeight.Bold, color = BtnCreamWhite)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showClockOutConfirmDialog = false }) {
-                    Text("Batal", color = Color.Gray)
+                    Text("Batal", color = TextMuted)
                 }
             },
-            containerColor = CardWhite,
-            shape = RoundedCornerShape(16.dp)
+            containerColor = CardCreamWhite,
+            shape = RoundedCornerShape(20.dp)
         )
     }
 }
+

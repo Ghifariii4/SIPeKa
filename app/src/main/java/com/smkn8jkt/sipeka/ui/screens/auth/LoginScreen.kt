@@ -1,6 +1,11 @@
 package com.smkn8jkt.sipeka.ui.screens.auth
 
 import android.widget.Toast
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -12,7 +17,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -22,6 +29,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -33,6 +41,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -48,10 +60,18 @@ import com.smkn8jkt.sipeka.R
 import com.smkn8jkt.sipeka.ui.components.PrimaryButton
 import com.smkn8jkt.sipeka.ui.components.SipekaPasswordField
 import com.smkn8jkt.sipeka.ui.components.SipekaTextField
-import com.smkn8jkt.sipeka.ui.theme.BackgroundNeutral
-import com.smkn8jkt.sipeka.ui.theme.PrimaryBrown
-import com.smkn8jkt.sipeka.ui.theme.SecondaryBrown
+import com.smkn8jkt.sipeka.ui.theme.BgDarkEspresso
+import com.smkn8jkt.sipeka.ui.theme.BgLightCanvas
+import com.smkn8jkt.sipeka.ui.theme.BgWarmTan
+import com.smkn8jkt.sipeka.ui.theme.BorderStitch
+import com.smkn8jkt.sipeka.ui.theme.BtnCreamWhite
+import com.smkn8jkt.sipeka.ui.theme.BtnDarkChocolate
+import com.smkn8jkt.sipeka.ui.theme.BtnMocha
+import com.smkn8jkt.sipeka.ui.theme.CardCreamWhite
 import com.smkn8jkt.sipeka.ui.theme.SipekaTheme
+import com.smkn8jkt.sipeka.ui.theme.TextDark
+import com.smkn8jkt.sipeka.ui.theme.TextMuted
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -93,26 +113,52 @@ fun LoginScreenContent(
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
 
+    // Spring Entrance Animation
+    val cardScale = remember { Animatable(0.85f) }
+    val cardAlpha = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        launch {
+            cardScale.animateTo(
+                targetValue = 1.0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+        }
+        launch {
+            cardAlpha.animateTo(
+                targetValue = 1.0f,
+                animationSpec = tween(durationMillis = 500)
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundNeutral),
+            .background(BgLightCanvas),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp)
+                .scale(cardScale.value)
+                .alpha(cardAlpha.value)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
+            // Floating Card Container (Clean White with Border & Shadow)
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = CardCreamWhite
                 ),
+                border = BorderStroke(1.dp, BorderStitch),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
                 Column(
@@ -121,31 +167,46 @@ fun LoginScreenContent(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.loading_sipeka),
-                        contentDescription = "Logo SIPeKa",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .height(65.dp)
-                            .padding(bottom = 8.dp)
-                    )
+                    // Logo Container - Bright Pure White & Elevated (Tidak Samar!)
+                    Surface(
+                        modifier = Modifier.size(84.dp),
+                        shape = CircleShape,
+                        color = Color.White,
+                        shadowElevation = 6.dp,
+                        border = BorderStroke(2.dp, BorderStitch)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.loading_sipeka),
+                                contentDescription = "Logo SIPeKa",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
                         text = "Selamat Datang",
-                        style = MaterialTheme.typography.titleLarge,
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SecondaryBrown,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextDark,
                         textAlign = TextAlign.Center
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Silakan login ke akun Anda",
-                        style = MaterialTheme.typography.bodyLarge,
+                        text = "Masuk ke Sistem Informasi PKK SMKN 8",
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium,
+                        color = TextMuted,
                         textAlign = TextAlign.Center
                     )
 
@@ -163,7 +224,7 @@ fun LoginScreenContent(
                             Icon(
                                 imageVector = Icons.Default.Person,
                                 contentDescription = "NISN/NIP Icon",
-                                tint = PrimaryBrown
+                                tint = BtnMocha
                             )
                         }
                     )
@@ -179,12 +240,12 @@ fun LoginScreenContent(
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "Password Icon",
-                                tint = PrimaryBrown
+                                tint = BtnMocha
                             )
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     TextButton(
                         onClick = onNavigateToRegister,
@@ -194,13 +255,13 @@ fun LoginScreenContent(
                             Text(
                                 text = "Belum punya akun? ",
                                 fontSize = 13.sp,
-                                color = Color.Gray
+                                color = TextMuted
                             )
                             Text(
-                                text = "Register",
+                                text = "Daftar Sekarang",
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = SecondaryBrown
+                                color = BtnDarkChocolate
                             )
                         }
                     }
@@ -220,7 +281,7 @@ fun LoginScreenContent(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     PrimaryButton(
-                        text = "LOGIN",
+                        text = "MASUK",
                         onClick = { onLoginClick(nisnNip, password) },
                         isLoading = isLoading
                     )
@@ -229,14 +290,14 @@ fun LoginScreenContent(
 
                     TextButton(
                         onClick = {
-                            Toast.makeText(context, "Silakan hubungi Admin Sekolah untuk reset password", Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, "Silakan hubungi Guru Pembina untuk reset password", Toast.LENGTH_LONG).show()
                         },
                         modifier = Modifier.align(Alignment.CenterHorizontally)
                     ) {
                         Text(
                             text = "Lupa Password?",
                             fontSize = 13.sp,
-                            color = Color.Gray,
+                            color = TextMuted,
                             fontWeight = FontWeight.Medium
                         )
                     }

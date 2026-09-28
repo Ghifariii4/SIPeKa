@@ -57,6 +57,30 @@ interface ApiService {
 
     @DELETE("products/{id}")
     suspend fun deleteProduct(
+        @Path("id") id: String,
+        @Query("force") force: Boolean = true,
+        @Query("cascade") cascade: Boolean = true,
+        @Query("hard") hard: Boolean = true
+    ): Response<BaseResponse<Any>>
+
+    @DELETE("products")
+    suspend fun deleteProductByQuery(
+        @Query("id") id: String,
+        @Query("force") force: Boolean = true
+    ): Response<BaseResponse<Any>>
+
+    @POST("products/delete")
+    suspend fun deleteProductWithBody(
+        @Body body: Map<String, String>
+    ): Response<BaseResponse<Any>>
+
+    @POST("products/{id}/delete")
+    suspend fun deleteProductPost(
+        @Path("id") id: String
+    ): Response<BaseResponse<Any>>
+
+    @DELETE("admin/products/{id}")
+    suspend fun deleteAdminProduct(
         @Path("id") id: String
     ): Response<BaseResponse<Any>>
 

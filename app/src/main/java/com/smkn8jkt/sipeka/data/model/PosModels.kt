@@ -161,7 +161,7 @@ data class OrderItemData(
     @SerializedName("product") val productSnake: ProductResponse? = null
 ) {
     val displayProductName: String
-        get() = productName ?: product?.name ?: productSnake?.name ?: "Produk Kantin"
+        get() = productName ?: product?.name ?: productSnake?.name ?: "Produk PKK"
 
     val displayPrice: Double
         get() = price ?: priceSnapshot ?: product?.price ?: productSnake?.price ?: 0.0

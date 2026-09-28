@@ -1,6 +1,11 @@
 package com.smkn8jkt.sipeka.ui.screens.auth
 
 import android.widget.Toast
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -12,11 +17,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockReset
@@ -25,6 +31,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -36,6 +43,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -52,10 +61,15 @@ import com.smkn8jkt.sipeka.ui.components.PrimaryButton
 import com.smkn8jkt.sipeka.ui.components.SipekaDropdownField
 import com.smkn8jkt.sipeka.ui.components.SipekaPasswordField
 import com.smkn8jkt.sipeka.ui.components.SipekaTextField
-import com.smkn8jkt.sipeka.ui.theme.BackgroundNeutral
-import com.smkn8jkt.sipeka.ui.theme.PrimaryBrown
-import com.smkn8jkt.sipeka.ui.theme.SecondaryBrown
+import com.smkn8jkt.sipeka.ui.theme.BgLightCanvas
+import com.smkn8jkt.sipeka.ui.theme.BorderStitch
+import com.smkn8jkt.sipeka.ui.theme.BtnDarkChocolate
+import com.smkn8jkt.sipeka.ui.theme.BtnMocha
+import com.smkn8jkt.sipeka.ui.theme.CardCreamWhite
 import com.smkn8jkt.sipeka.ui.theme.SipekaTheme
+import com.smkn8jkt.sipeka.ui.theme.TextDark
+import com.smkn8jkt.sipeka.ui.theme.TextMuted
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterScreen(
@@ -107,26 +121,51 @@ fun RegisterScreenContent(
 
     val roleOptions = remember { listOf("pembeli", "penitip") }
 
+    // Spring Entrance Animation
+    val cardScale = remember { Animatable(0.85f) }
+    val cardAlpha = remember { Animatable(0f) }
+
+    LaunchedEffect(Unit) {
+        launch {
+            cardScale.animateTo(
+                targetValue = 1.0f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+        }
+        launch {
+            cardAlpha.animateTo(
+                targetValue = 1.0f,
+                animationSpec = tween(durationMillis = 500)
+            )
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundNeutral),
+            .background(BgLightCanvas),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp)
+                .scale(cardScale.value)
+                .alpha(cardAlpha.value)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = CardCreamWhite
                 ),
+                border = BorderStroke(1.dp, BorderStitch),
                 elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
             ) {
                 Column(
@@ -135,31 +174,46 @@ fun RegisterScreenContent(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.loading_sipeka),
-                        contentDescription = "Logo SIPeKa",
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .height(65.dp)
-                            .padding(bottom = 8.dp)
-                    )
+                    // Logo Container - Pure Crisp White & Elevated (Tidak Samar!)
+                    Surface(
+                        modifier = Modifier.size(84.dp),
+                        shape = CircleShape,
+                        color = Color.White,
+                        shadowElevation = 6.dp,
+                        border = BorderStroke(2.dp, BorderStitch)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(12.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.loading_sipeka),
+                                contentDescription = "Logo SIPeKa",
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "Buat Akun",
-                        style = MaterialTheme.typography.titleLarge,
+                        text = "Daftar Akun Baru",
                         fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = SecondaryBrown,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextDark,
                         textAlign = TextAlign.Center
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
-                        text = "Daftar untuk mulai menggunakan aplikasi",
-                        style = MaterialTheme.typography.bodyLarge,
+                        text = "Lengkapi data diri Anda untuk bergabung di Sistem PKK",
                         fontSize = 13.sp,
-                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium,
+                        color = TextMuted,
                         textAlign = TextAlign.Center
                     )
 
@@ -175,9 +229,9 @@ fun RegisterScreenContent(
                         keyboardType = KeyboardType.Number,
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.Person,
+                                imageVector = Icons.Default.Badge,
                                 contentDescription = "NISN/NIP Icon",
-                                tint = PrimaryBrown
+                                tint = BtnMocha
                             )
                         }
                     )
@@ -191,9 +245,9 @@ fun RegisterScreenContent(
                         placeholder = "Masukkan Nama Lengkap Anda",
                         leadingIcon = {
                             Icon(
-                                imageVector = Icons.Default.AccountCircle,
-                                contentDescription = "Nama Icon",
-                                tint = PrimaryBrown
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Name Icon",
+                                tint = BtnMocha
                             )
                         }
                     )
@@ -204,14 +258,7 @@ fun RegisterScreenContent(
                         options = roleOptions,
                         selectedOption = selectedRole,
                         onOptionSelected = { selectedRole = it },
-                        label = "Role",
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Badge,
-                                contentDescription = "Role Icon",
-                                tint = PrimaryBrown
-                            )
-                        }
+                        label = "Daftar Sebagai"
                     )
 
                     Spacer(modifier = Modifier.height(14.dp))
@@ -220,44 +267,55 @@ fun RegisterScreenContent(
                         value = password,
                         onValueChange = { password = it },
                         label = "Password",
-                        placeholder = "Buat Password Akun",
+                        placeholder = "Masukkan Password",
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.Lock,
                                 contentDescription = "Password Icon",
-                                tint = PrimaryBrown
+                                tint = BtnMocha
                             )
                         }
                     )
 
-                    Text(
-                        text = "• Minimal 6 karakter (kombinasi huruf & angka)",
-                        fontSize = 11.sp,
-                        color = Color.Gray,
-                        textAlign = TextAlign.Start,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp, start = 4.dp)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     SipekaPasswordField(
                         value = confirmPassword,
                         onValueChange = { confirmPassword = it },
                         label = "Konfirmasi Password",
-                        placeholder = "Ulangi Password Akun",
+                        placeholder = "Ulangi Password",
                         leadingIcon = {
                             Icon(
                                 imageVector = Icons.Default.LockReset,
                                 contentDescription = "Confirm Password Icon",
-                                tint = PrimaryBrown
+                                tint = BtnMocha
                             )
                         }
                     )
 
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    TextButton(
+                        onClick = onNavigateToLogin,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Sudah punya akun? ",
+                                fontSize = 13.sp,
+                                color = TextMuted
+                            )
+                            Text(
+                                text = "Masuk",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BtnDarkChocolate
+                            )
+                        }
+                    }
+
                     if (!errorMessage.isNullOrBlank()) {
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
                             text = errorMessage,
                             color = MaterialTheme.colorScheme.error,
@@ -268,36 +326,21 @@ fun RegisterScreenContent(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     PrimaryButton(
-                        text = "REGISTER",
+                        text = "DAFTAR SEKARANG",
                         onClick = {
-                            onRegisterClick(nisnNip, name, password, confirmPassword, selectedRole)
+                            onRegisterClick(
+                                nisnNip,
+                                name,
+                                password,
+                                confirmPassword,
+                                selectedRole
+                            )
                         },
                         isLoading = isLoading
                     )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    TextButton(
-                        onClick = onNavigateToLogin,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                text = "Sudah punya akun? ",
-                                fontSize = 13.sp,
-                                color = Color.Gray
-                            )
-                            Text(
-                                text = "Login",
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = SecondaryBrown
-                            )
-                        }
-                    }
                 }
             }
         }

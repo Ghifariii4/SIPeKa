@@ -41,10 +41,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.smkn8jkt.sipeka.ui.theme.OutlineGray
-import com.smkn8jkt.sipeka.ui.theme.PrimaryBrown
-import com.smkn8jkt.sipeka.ui.theme.SurfaceBeige
-import com.smkn8jkt.sipeka.ui.theme.TextOnPrimary
+import com.smkn8jkt.sipeka.ui.theme.BtnCreamWhite
+import com.smkn8jkt.sipeka.ui.theme.BtnDarkChocolate
+import com.smkn8jkt.sipeka.ui.theme.BtnMocha
+import com.smkn8jkt.sipeka.ui.theme.CardCreamWhite
+import com.smkn8jkt.sipeka.ui.theme.OutlineWarm
+import com.smkn8jkt.sipeka.ui.theme.TextDark
+import com.smkn8jkt.sipeka.ui.theme.TextMedium
+import com.smkn8jkt.sipeka.ui.theme.TextMuted
 
 @Composable
 fun PrimaryButton(
@@ -57,19 +61,22 @@ fun PrimaryButton(
     Button(
         onClick = onClick,
         enabled = enabled && !isLoading,
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = PrimaryBrown,
-            contentColor = TextOnPrimary
+            containerColor = BtnDarkChocolate,
+            contentColor = BtnCreamWhite,
+            disabledContainerColor = BtnDarkChocolate.copy(alpha = 0.5f),
+            disabledContentColor = BtnCreamWhite.copy(alpha = 0.6f)
         ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 4.dp),
         modifier = modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .height(52.dp)
     ) {
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.size(24.dp),
-                color = TextOnPrimary,
+                color = BtnCreamWhite,
                 strokeWidth = 2.5.dp
             )
         } else {
@@ -77,7 +84,48 @@ fun PrimaryButton(
                 text = text,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextOnPrimary
+                color = BtnCreamWhite,
+                letterSpacing = 0.5.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun SecondaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    isLoading: Boolean = false,
+    enabled: Boolean = true
+) {
+    Button(
+        onClick = onClick,
+        enabled = enabled && !isLoading,
+        shape = RoundedCornerShape(14.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = BtnMocha,
+            contentColor = BtnCreamWhite,
+            disabledContainerColor = BtnMocha.copy(alpha = 0.5f),
+            disabledContentColor = BtnCreamWhite.copy(alpha = 0.6f)
+        ),
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp, pressedElevation = 4.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(50.dp)
+    ) {
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(22.dp),
+                color = BtnCreamWhite,
+                strokeWidth = 2.5.dp
+            )
+        } else {
+            Text(
+                text = text,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = BtnCreamWhite
             )
         }
     }
@@ -87,15 +135,17 @@ fun PrimaryButton(
 fun OutlinedPrimaryButton(
     text: String,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
 ) {
     OutlinedButton(
         onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, PrimaryBrown),
+        enabled = enabled,
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.5.dp, BtnDarkChocolate),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = Color.Transparent,
-            contentColor = PrimaryBrown
+            contentColor = BtnDarkChocolate
         ),
         modifier = modifier
             .fillMaxWidth()
@@ -103,9 +153,9 @@ fun OutlinedPrimaryButton(
     ) {
         Text(
             text = text,
-            fontSize = 16.sp,
+            fontSize = 15.sp,
             fontWeight = FontWeight.Bold,
-            color = PrimaryBrown
+            color = BtnDarkChocolate
         )
     }
 }
@@ -127,8 +177,8 @@ fun SipekaTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = placeholder?.let { { Text(it) } },
+        label = { Text(label, color = TextMedium) },
+        placeholder = placeholder?.let { { Text(it, color = TextMuted.copy(alpha = 0.7f)) } },
         singleLine = singleLine,
         leadingIcon = leadingIcon,
         trailingIcon = if (isPassword) {
@@ -136,7 +186,7 @@ fun SipekaTextField(
                 val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
                 val description = if (passwordVisible) "Sembunyikan Password" else "Tampilkan Password"
                 IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                    Icon(imageVector = icon, contentDescription = description)
+                    Icon(imageVector = icon, contentDescription = description, tint = BtnMocha)
                 }
             }
         } else null,
@@ -145,13 +195,16 @@ fun SipekaTextField(
             keyboardType = if (isPassword) KeyboardType.Password else keyboardType,
             imeAction = ImeAction.Next
         ),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            disabledContainerColor = Color.White,
-            focusedBorderColor = PrimaryBrown,
-            unfocusedBorderColor = OutlineGray
+            focusedTextColor = TextDark,
+            unfocusedTextColor = TextDark,
+            focusedContainerColor = CardCreamWhite,
+            unfocusedContainerColor = CardCreamWhite,
+            disabledContainerColor = CardCreamWhite.copy(alpha = 0.7f),
+            focusedBorderColor = BtnDarkChocolate,
+            unfocusedBorderColor = OutlineWarm,
+            cursorColor = BtnDarkChocolate
         ),
         modifier = modifier.fillMaxWidth()
     )
@@ -171,15 +224,15 @@ fun SipekaPasswordField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = placeholder?.let { { Text(it) } },
+        label = { Text(label, color = TextMedium) },
+        placeholder = placeholder?.let { { Text(it, color = TextMuted.copy(alpha = 0.7f)) } },
         singleLine = true,
         leadingIcon = leadingIcon,
         trailingIcon = {
             val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
             val description = if (passwordVisible) "Sembunyikan Password" else "Tampilkan Password"
             IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                Icon(imageVector = icon, contentDescription = description)
+                Icon(imageVector = icon, contentDescription = description, tint = BtnMocha)
             }
         },
         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -187,13 +240,16 @@ fun SipekaPasswordField(
             keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Done
         ),
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
-            disabledContainerColor = Color.White,
-            focusedBorderColor = PrimaryBrown,
-            unfocusedBorderColor = OutlineGray
+            focusedTextColor = TextDark,
+            unfocusedTextColor = TextDark,
+            focusedContainerColor = CardCreamWhite,
+            unfocusedContainerColor = CardCreamWhite,
+            disabledContainerColor = CardCreamWhite.copy(alpha = 0.7f),
+            focusedBorderColor = BtnDarkChocolate,
+            unfocusedBorderColor = OutlineWarm,
+            cursorColor = BtnDarkChocolate
         ),
         modifier = modifier.fillMaxWidth()
     )
@@ -220,18 +276,21 @@ fun SipekaDropdownField(
             value = selectedOption,
             onValueChange = {},
             readOnly = true,
-            label = { Text(label) },
+            label = { Text(label, color = TextMedium) },
             leadingIcon = leadingIcon,
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                disabledContainerColor = Color.White,
-                focusedBorderColor = PrimaryBrown,
-                unfocusedBorderColor = OutlineGray
+                focusedTextColor = TextDark,
+                unfocusedTextColor = TextDark,
+                focusedContainerColor = CardCreamWhite,
+                unfocusedContainerColor = CardCreamWhite,
+                disabledContainerColor = CardCreamWhite.copy(alpha = 0.7f),
+                focusedBorderColor = BtnDarkChocolate,
+                unfocusedBorderColor = OutlineWarm,
+                cursorColor = BtnDarkChocolate
             ),
             modifier = Modifier
                 .menuAnchor(type = ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)
@@ -240,11 +299,13 @@ fun SipekaDropdownField(
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
+            containerColor = CardCreamWhite,
+            shape = RoundedCornerShape(14.dp)
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(text = option, fontWeight = FontWeight.Medium) },
+                    text = { Text(text = option, fontWeight = FontWeight.SemiBold, color = TextDark) },
                     onClick = {
                         onOptionSelected(option)
                         expanded = false
@@ -265,24 +326,28 @@ fun SearchBar(
     TextField(
         value = query,
         onValueChange = onQueryChange,
-        placeholder = { Text(text = placeholder, color = Color.Gray, fontSize = 14.sp) },
+        placeholder = { Text(text = placeholder, color = TextMuted.copy(alpha = 0.7f), fontSize = 14.sp) },
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,
                 contentDescription = "Search Icon",
-                tint = PrimaryBrown
+                tint = BtnMocha
             )
         },
         singleLine = true,
         shape = CircleShape,
         colors = TextFieldDefaults.colors(
-            focusedContainerColor = SurfaceBeige.copy(alpha = 0.3f),
-            unfocusedContainerColor = SurfaceBeige.copy(alpha = 0.3f),
-            disabledContainerColor = SurfaceBeige.copy(alpha = 0.3f),
+            focusedTextColor = TextDark,
+            unfocusedTextColor = TextDark,
+            focusedContainerColor = CardCreamWhite,
+            unfocusedContainerColor = CardCreamWhite,
+            disabledContainerColor = CardCreamWhite,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent
+            disabledIndicatorColor = Color.Transparent,
+            cursorColor = BtnDarkChocolate
         ),
         modifier = modifier.fillMaxWidth()
     )
 }
+
