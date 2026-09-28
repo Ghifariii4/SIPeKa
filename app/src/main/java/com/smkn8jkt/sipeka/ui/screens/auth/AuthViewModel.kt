@@ -65,6 +65,21 @@ class AuthViewModel(
                     val body = response.body()
                     val token = body?.data?.token
                     val role = body?.data?.role ?: body?.data?.user?.role ?: "admin"
+                    val userData = body?.data?.user
+
+                    // Pendaftaran Penitip/Penjual/Siswa Harus Menunggu ACC Admin
+                    val isPendingApproval = (role.equals("penitip", ignoreCase = true) ||
+                            role.equals("penjual", ignoreCase = true) ||
+                            role.equals("pembeli", ignoreCase = true) ||
+                            role.equals("siswa", ignoreCase = true)) &&
+                            (userData?.isApproved == false ||
+                                    (userData?.status ?: "").equals("pending", ignoreCase = true))
+
+                    if (isPendingApproval) {
+                        _errorMessage.value = "Pendaftaran akun Anda (${userData?.name ?: "User"}) sedang dalam antrean. Mohon tunggu persetujuan (ACC) dari Admin / Guru Pembina."
+                        _loginSuccess.value = false
+                        return@launch
+                    }
 
                     _userRole.value = role
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,14 +27,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
+import com.smkn8jkt.sipeka.R
 import com.smkn8jkt.sipeka.data.model.ProductResponse
 import com.smkn8jkt.sipeka.ui.theme.PrimaryBrown
 import com.smkn8jkt.sipeka.ui.theme.SecondaryBrown
@@ -42,36 +50,62 @@ import com.smkn8jkt.sipeka.ui.theme.TextOnPrimary
 import java.text.NumberFormat
 import java.util.Locale
 
-// Data Class Product Dummy (Compatible Wrapper)
-data class ProductDummy(
-    val id: String,
-    val name: String,
-    val price: Double,
-    val category: String,
-    val imageUrl: String = ""
-)
-
-fun ProductDummy.toProductResponse() = ProductResponse(
-    id = id,
-    name = name,
-    price = price,
-    category = category,
-    imageUrl = imageUrl
-)
-
-val sampleProducts = listOf(
-    ProductResponse("1", "Nasi Goreng Spesial", 15000.0, "Makanan", stock = 20),
-    ProductResponse("2", "Es Teh Manis", 5000.0, "Minuman", stock = 50),
-    ProductResponse("3", "Roti Bakar Cokelat", 10000.0, "Snack", stock = 15),
-    ProductResponse("4", "Mie Ayam Bakso", 14000.0, "Makanan", stock = 25),
-    ProductResponse("5", "Es Jeruk Peras", 6000.0, "Minuman", stock = 40),
-    ProductResponse("6", "Batagor Bandung", 12000.0, "Snack", stock = 30)
-)
-
 // Helper Extension Format Rupiah
 fun Double.toRupiahFormat(): String {
     val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
     return formatter.format(this).replace("Rp", "Rp ").replace(",00", "")
+}
+
+fun buildFullImageUrl(rawUrl: String?): String? {
+    if (rawUrl.isNullOrBlank()) return null
+    val clean = rawUrl.trim()
+    if (clean.startsWith("http://", ignoreCase = true) || clean.startsWith("https://", ignoreCase = true)) {
+        return clean
+    }
+    val fileName = clean.removePrefix("/uploads/").removePrefix("uploads/").removePrefix("/")
+    return "http://47.129.118.194:8081/uploads/$fileName"
+}
+
+// COMPOSABLE KOMPONEN GAMBAR PRODUK REAL-TIME DENGAN COIL & FALLBACK
+@Composable
+fun ProductImage(
+    imageUrl: String?,
+    category: String?,
+    contentDescription: String,
+    modifier: Modifier = Modifier
+) {
+    val fullUrl = remember(imageUrl) {
+        buildFullImageUrl(imageUrl)
+    }
+
+    if (fullUrl != null) {
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(fullUrl)
+                .crossfade(true)
+                .build(),
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = modifier
+        )
+    } else {
+        Box(
+            modifier = modifier.background(Color(0xFFF0EAE1)),
+            contentAlignment = Alignment.Center
+        ) {
+            val iconVector = when ((category ?: "").lowercase()) {
+                "minuman" -> Icons.Default.LocalCafe
+                "snack" -> Icons.Default.Fastfood
+                else -> Icons.Default.Restaurant
+            }
+            Icon(
+                imageVector = iconVector,
+                contentDescription = contentDescription,
+                tint = PrimaryBrown.copy(alpha = 0.7f),
+                modifier = Modifier.size(36.dp)
+            )
+        }
+    }
 }
 
 @Composable
@@ -91,25 +125,14 @@ fun SipekaProductCard(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            Box(
+            ProductImage(
+                imageUrl = product.imageUrl,
+                category = product.category,
+                contentDescription = product.name,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(110.dp)
-                    .background(Color(0xFFF0EAE1)),
-                contentAlignment = Alignment.Center
-            ) {
-                val iconVector = when ((product.category ?: "").lowercase()) {
-                    "minuman" -> Icons.Default.LocalCafe
-                    "snack" -> Icons.Default.Fastfood
-                    else -> Icons.Default.Restaurant
-                }
-                Icon(
-                    imageVector = iconVector,
-                    contentDescription = product.name,
-                    tint = PrimaryBrown,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
+            )
 
             Column(
                 modifier = Modifier

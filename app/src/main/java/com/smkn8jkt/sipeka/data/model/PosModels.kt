@@ -9,9 +9,33 @@ data class ProductResponse(
     @SerializedName("price") val price: Double,
     @SerializedName("category") val category: String? = "Umum",
     @SerializedName("image_url") val imageUrl: String? = "",
+    @SerializedName("description") val description: String? = "",
     @SerializedName("penitip_id") val penitipId: String? = null,
     @SerializedName("school_margin") val schoolMargin: Double? = 1000.0,
-    @SerializedName("stock") val stock: Int = 0
+    @SerializedName("stock") val stock: Int = 0,
+    @SerializedName("sold_count") val soldCount: Int? = 0,
+    @SerializedName("sold_qty") val soldQty: Int? = 0,
+    @SerializedName("terjual") val terjual: Int? = 0
+) {
+    val totalSold: Int
+        get() = soldCount ?: soldQty ?: terjual ?: 0
+}
+
+data class PenitipDashboardResponse(
+    @SerializedName("products") val products: List<ProductResponse>? = emptyList(),
+    @SerializedName("total_unpaid_earnings") val totalUnpaidEarnings: Double? = 0.0,
+    @SerializedName("unpaid_earnings") val unpaidEarningsAlt: Double? = 0.0,
+    @SerializedName("total_earnings") val totalEarningsAlt: Double? = 0.0
+) {
+    val effectiveEarnings: Double
+        get() = totalUnpaidEarnings ?: unpaidEarningsAlt ?: totalEarningsAlt ?: 0.0
+}
+
+data class AddProductRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("price") val price: Double,
+    @SerializedName("school_margin") val schoolMargin: Double = 1000.0,
+    @SerializedName("stock") val stock: Int
 )
 
 // Clock-In Request Model
@@ -53,8 +77,13 @@ data class UserData(
     @SerializedName("name") val name: String? = null,
     @SerializedName("role") val role: String? = null,
     @SerializedName("status") val status: String? = null,
-    @SerializedName("is_approved") val isApproved: Boolean? = null
-)
+    @SerializedName("is_approved") val isApproved: Boolean? = null,
+    @SerializedName("isApproved") val isApprovedAlt: Boolean? = null,
+    @SerializedName("approved") val approved: Boolean? = null
+) {
+    val isUserApproved: Boolean
+        get() = isApproved == true || isApprovedAlt == true || approved == true || status.equals("active", ignoreCase = true) || status.equals("approved", ignoreCase = true)
+}
 
 data class ShiftData(
     @SerializedName("id") val id: String? = null,

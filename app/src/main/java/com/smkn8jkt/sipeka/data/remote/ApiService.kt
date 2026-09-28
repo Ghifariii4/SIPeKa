@@ -1,5 +1,6 @@
 package com.smkn8jkt.sipeka.data.remote
 
+import com.smkn8jkt.sipeka.data.model.AddProductRequest
 import com.smkn8jkt.sipeka.data.model.BaseResponse
 import com.smkn8jkt.sipeka.data.model.ClockInRequest
 import com.smkn8jkt.sipeka.data.model.LoginRequest
@@ -7,6 +8,7 @@ import com.smkn8jkt.sipeka.data.model.LoginResponse
 import com.smkn8jkt.sipeka.data.model.OrderData
 import com.smkn8jkt.sipeka.data.model.OrderRequest
 import com.smkn8jkt.sipeka.data.model.PayoutResponse
+import com.smkn8jkt.sipeka.data.model.PenitipDashboardResponse
 import com.smkn8jkt.sipeka.data.model.ProductResponse
 import com.smkn8jkt.sipeka.data.model.ProfitResponse
 import com.smkn8jkt.sipeka.data.model.RegisterRequest
@@ -14,11 +16,16 @@ import com.smkn8jkt.sipeka.data.model.ScanData
 import com.smkn8jkt.sipeka.data.model.ShiftData
 import com.smkn8jkt.sipeka.data.model.ShiftValidationResponse
 import com.smkn8jkt.sipeka.data.model.UserData
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.PUT
+import retrofit2.http.Part
 import retrofit2.http.Path
 import retrofit2.http.Query
 
@@ -47,6 +54,11 @@ interface ApiService {
     suspend fun getProductById(
         @Path("id") id: String
     ): Response<BaseResponse<ProductResponse>>
+
+    @DELETE("products/{id}")
+    suspend fun deleteProduct(
+        @Path("id") id: String
+    ): Response<BaseResponse<Any>>
 
     @POST("products")
     suspend fun createProduct(
@@ -78,6 +90,12 @@ interface ApiService {
         @Path("id") id: String
     ): Response<BaseResponse<UserData>>
 
+    @PUT("admin/users/{id}")
+    suspend fun updateUser(
+        @Path("id") id: String,
+        @Body request: UserData
+    ): Response<BaseResponse<UserData>>
+
     // Admin Finance (Laba, Validasi Setoran, Bagi Hasil)
     @GET("admin/finance/profit")
     suspend fun getSchoolProfit(): Response<BaseResponse<ProfitResponse>>
@@ -96,6 +114,26 @@ interface ApiService {
     @PUT("admin/finance/payouts/{penitip_id}")
     suspend fun processPayout(
         @Path("penitip_id") penitipId: String
+    ): Response<BaseResponse<Any>>
+
+    // Penitip Endpoints
+    @GET("penitip/dashboard")
+    suspend fun getPenitipDashboard(): Response<BaseResponse<PenitipDashboardResponse>>
+
+    @POST("products")
+    suspend fun addProduct(
+        @Body request: AddProductRequest
+    ): Response<BaseResponse<Any>>
+
+    @Multipart
+    @POST("products")
+    suspend fun addProductMultipart(
+        @Part image: MultipartBody.Part?,
+        @Part("name") name: RequestBody,
+        @Part("price") price: RequestBody,
+        @Part("description") description: RequestBody,
+        @Part("stock") stock: RequestBody,
+        @Part("school_margin") schoolMargin: RequestBody
     ): Response<BaseResponse<Any>>
 
     // Shifts (Kasir)

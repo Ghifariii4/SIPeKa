@@ -174,7 +174,7 @@ class PosViewModel(
             _isClockOutLoading.value = true
             _errorMessage.value = null
             try {
-                val response = apiService.clockOut()
+                apiService.clockOut()
                 tokenManager?.clearStartingCash()
                 _isShiftOpen.value = false
                 _currentShiftData.value = null

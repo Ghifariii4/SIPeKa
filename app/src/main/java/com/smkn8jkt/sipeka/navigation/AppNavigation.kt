@@ -45,6 +45,9 @@ import com.smkn8jkt.sipeka.ui.screens.admin.AdminViewModelFactory
 import com.smkn8jkt.sipeka.ui.screens.auth.AuthViewModel
 import com.smkn8jkt.sipeka.ui.screens.auth.LoginScreen
 import com.smkn8jkt.sipeka.ui.screens.auth.RegisterScreen
+import com.smkn8jkt.sipeka.ui.screens.penitip.PenitipDashboardScreen
+import com.smkn8jkt.sipeka.ui.screens.penitip.PenitipViewModel
+import com.smkn8jkt.sipeka.ui.screens.penitip.PenitipViewModelFactory
 import com.smkn8jkt.sipeka.ui.screens.pos.KasirHomeScreen
 import com.smkn8jkt.sipeka.ui.screens.pos.PosViewModel
 import com.smkn8jkt.sipeka.ui.screens.pos.PosViewModelFactory
@@ -62,6 +65,7 @@ object Screen {
     const val History = "history"
     const val Profile = "profile"
     const val AdminDashboard = "admin_dashboard"
+    const val PenitipDashboard = "penitip_dashboard"
     const val AccessDenied = "access_denied"
     const val DebugDashboard = "debug_dashboard"
 }
@@ -74,7 +78,8 @@ fun AppNavigation(
     tokenManager: TokenManager? = null,
     navController: NavHostController = rememberNavController(),
     posViewModel: PosViewModel = viewModel(factory = PosViewModelFactory(tokenManager)),
-    adminViewModel: AdminViewModel = viewModel(factory = AdminViewModelFactory(tokenManager))
+    adminViewModel: AdminViewModel = viewModel(factory = AdminViewModelFactory(tokenManager)),
+    penitipViewModel: PenitipViewModel = viewModel(factory = PenitipViewModelFactory(tokenManager))
 ) {
     val currentRole by tokenManager?.roleFlow?.collectAsState(initial = null) ?: remember { mutableStateOf(null) }
     val authUserRole by authViewModel.userRole.collectAsState()
@@ -90,6 +95,10 @@ fun AppNavigation(
                     val role = currentRole?.lowercase() ?: authUserRole?.lowercase() ?: "kasir"
                     if (role == "admin" || role == "guru" || role == "pembina") {
                         navController.navigate(Screen.AdminDashboard) {
+                            popUpTo(Screen.Splash) { inclusive = true }
+                        }
+                    } else if (role == "penitip" || role == "penjual") {
+                        navController.navigate(Screen.PenitipDashboard) {
                             popUpTo(Screen.Splash) { inclusive = true }
                         }
                     } else {
@@ -113,6 +122,10 @@ fun AppNavigation(
                     val userRole = authViewModel.userRole.value?.lowercase() ?: currentRole?.lowercase() ?: "kasir"
                     if (userRole == "admin" || userRole == "guru" || userRole == "pembina") {
                         navController.navigate(Screen.AdminDashboard) {
+                            popUpTo(Screen.Login) { inclusive = true }
+                        }
+                    } else if (userRole == "penitip" || userRole == "penjual") {
+                        navController.navigate(Screen.PenitipDashboard) {
                             popUpTo(Screen.Login) { inclusive = true }
                         }
                     } else if (userRole == "kasir") {
@@ -149,12 +162,28 @@ fun AppNavigation(
             )
         }
 
+        composable(Screen.PenitipDashboard) {
+            PenitipDashboardScreen(
+                navController = navController,
+                viewModel = penitipViewModel,
+                authViewModel = authViewModel,
+                tokenManager = tokenManager
+            )
+        }
+
         composable(Screen.Home) {
             val role = currentRole?.lowercase() ?: authUserRole?.lowercase()
             if (role == "admin" || role == "guru" || role == "pembina") {
                 AdminDashboardScreen(
                     navController = navController,
                     viewModel = adminViewModel,
+                    authViewModel = authViewModel,
+                    tokenManager = tokenManager
+                )
+            } else if (role == "penitip" || role == "penjual") {
+                PenitipDashboardScreen(
+                    navController = navController,
+                    viewModel = penitipViewModel,
                     authViewModel = authViewModel,
                     tokenManager = tokenManager
                 )
@@ -252,7 +281,7 @@ fun AccessDeniedScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Peran Anda (${userRole ?: "pembeli"}) tidak memiliki akses ke Dashboard. Hanya akun dengan peran 'kasir' atau 'admin' yang dapat mengakses aplikasi ini.",
+                    text = "Peran Anda (${userRole ?: "pembeli"}) tidak memiliki akses ke Dashboard ini.",
                     fontSize = 13.sp,
                     color = Color.Gray,
                     textAlign = TextAlign.Center

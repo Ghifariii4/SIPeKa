@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
@@ -20,6 +21,9 @@ class TokenManager(private val context: Context) {
         private val TOKEN_KEY = stringPreferencesKey("jwt_token")
         private val ROLE_KEY = stringPreferencesKey("user_role")
         private val STARTING_CASH_KEY = doublePreferencesKey("starting_cash")
+        private val VALIDATED_SHIFTS_KEY = stringSetPreferencesKey("validated_shifts")
+        private val PROCESSED_PAYOUTS_KEY = stringSetPreferencesKey("processed_payouts")
+        private val APPROVED_USERS_KEY = stringSetPreferencesKey("approved_users")
     }
 
     val tokenFlow: Flow<String?> = context.dataStore.data.map { preferences ->
@@ -32,6 +36,18 @@ class TokenManager(private val context: Context) {
 
     val startingCashFlow: Flow<Double> = context.dataStore.data.map { preferences ->
         preferences[STARTING_CASH_KEY] ?: 0.0
+    }
+
+    val validatedShiftsFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[VALIDATED_SHIFTS_KEY] ?: emptySet()
+    }
+
+    val processedPayoutsFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[PROCESSED_PAYOUTS_KEY] ?: emptySet()
+    }
+
+    val approvedUsersFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
+        preferences[APPROVED_USERS_KEY] ?: emptySet()
     }
 
     suspend fun saveToken(token: String) {
@@ -59,11 +75,47 @@ class TokenManager(private val context: Context) {
         }
     }
 
+    suspend fun markShiftValidated(shiftId: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[VALIDATED_SHIFTS_KEY] ?: emptySet()
+            preferences[VALIDATED_SHIFTS_KEY] = current + shiftId
+        }
+    }
+
+    suspend fun markShiftsValidated(shiftIds: List<String>) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[VALIDATED_SHIFTS_KEY] ?: emptySet()
+            preferences[VALIDATED_SHIFTS_KEY] = current + shiftIds
+        }
+    }
+
+    suspend fun markPayoutProcessed(penitipId: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[PROCESSED_PAYOUTS_KEY] ?: emptySet()
+            preferences[PROCESSED_PAYOUTS_KEY] = current + penitipId
+        }
+    }
+
+    suspend fun markPayoutsProcessed(penitipIds: List<String>) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[PROCESSED_PAYOUTS_KEY] ?: emptySet()
+            preferences[PROCESSED_PAYOUTS_KEY] = current + penitipIds
+        }
+    }
+
+    suspend fun markUserApproved(userId: String) {
+        context.dataStore.edit { preferences ->
+            val current = preferences[APPROVED_USERS_KEY] ?: emptySet()
+            preferences[APPROVED_USERS_KEY] = current + userId
+        }
+    }
+
     suspend fun clearToken() {
         context.dataStore.edit { preferences ->
             preferences.remove(TOKEN_KEY)
             preferences.remove(ROLE_KEY)
             preferences.remove(STARTING_CASH_KEY)
+            // KITA TETA PKAN VALIDATED SHIFTS, PROCESSED PAYOUTS, & APPROVED USERS AGAR PERSISTEN MESKI RE-LOGIN!
         }
     }
 
@@ -77,5 +129,9 @@ class TokenManager(private val context: Context) {
 
     fun getStartingCashSync(): Double = runBlocking {
         startingCashFlow.firstOrNull() ?: 0.0
+    }
+
+    fun getApprovedUsersSync(): Set<String> = runBlocking {
+        approvedUsersFlow.firstOrNull() ?: emptySet()
     }
 }

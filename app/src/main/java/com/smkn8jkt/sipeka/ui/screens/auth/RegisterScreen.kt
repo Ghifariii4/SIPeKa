@@ -70,7 +70,7 @@ fun RegisterScreen(
 
     LaunchedEffect(registerSuccess) {
         if (registerSuccess) {
-            Toast.makeText(context, "Registrasi Berhasil! Silakan Login", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Pendaftaran Akun Berhasil! Mohon tunggu persetujuan (ACC) dari Admin / Guru Pembina sebelum login.", Toast.LENGTH_LONG).show()
             viewModel.resetState()
             onNavigateToLogin()
         }

@@ -701,25 +701,19 @@ fun ModernProductCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(105.dp)
-                    .background(PlaceholderGray),
+                    .height(105.dp),
                 contentAlignment = Alignment.Center
             ) {
-                val iconVector = when ((product.category ?: "").lowercase()) {
-                    "minuman" -> Icons.Default.LocalCafe
-                    "snack" -> Icons.Default.Fastfood
-                    else -> Icons.Default.Restaurant
-                }
-                Icon(
-                    imageVector = iconVector,
+                ProductImage(
+                    imageUrl = product.imageUrl,
+                    category = product.category,
                     contentDescription = product.name ?: "",
-                    tint = DarkBrown.copy(alpha = 0.7f),
-                    modifier = Modifier.size(36.dp)
+                    modifier = Modifier.fillMaxSize()
                 )
 
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = if (isOutOfStock) Color(0xFFFFEBEE) else CardWhite,
+                    color = if (isOutOfStock) Color(0xFFFFEBEE) else CardWhite.copy(alpha = 0.9f),
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(6.dp)

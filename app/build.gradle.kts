@@ -55,6 +55,9 @@ dependencies {
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.8.7")
 
+    // Coil Image Loader
+    implementation("io.coil-kt:coil-compose:2.5.0")
+
     // Icons
     implementation("androidx.compose.material:material-icons-extended")
 
