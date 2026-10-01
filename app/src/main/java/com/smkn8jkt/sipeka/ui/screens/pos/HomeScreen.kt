@@ -28,10 +28,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.Person
@@ -39,6 +42,7 @@ import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -126,6 +130,8 @@ fun KasirHomeScreen(
     val searchQuery by viewModel.searchQuery.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val qrScanMessage by viewModel.qrScanMessage.collectAsState()
+    val preOrders by viewModel.preOrders.collectAsState()
+    val pendingPreOrders = remember(preOrders) { preOrders.filter { it.isPending } }
 
     var startingCashInput by remember { mutableStateOf("") }
     var selectedNavIndex by remember { mutableIntStateOf(0) }
@@ -560,28 +566,111 @@ fun KasirHomeScreen(
                     // Button Mode Scan QR PO
                     Surface(
                         shape = RoundedCornerShape(9.dp),
-                        color = Color.Transparent,
+                        color = if (pendingPreOrders.isNotEmpty()) Color(0xFFFEE6D8) else Color.Transparent,
                         modifier = Modifier
                             .weight(1f)
                             .clickable { showQrDialog = true }
                     ) {
                         Row(
-                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp),
                             horizontalArrangement = Arrangement.Center,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.QrCodeScanner,
                                 contentDescription = "Scan QR",
-                                tint = TextMuted,
+                                tint = if (pendingPreOrders.isNotEmpty()) Color(0xFFC25E00) else TextMuted,
                                 modifier = Modifier.size(15.dp)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Scan QR Pre-Order",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = TextMuted
+                                fontSize = 11.sp,
+                                fontWeight = if (pendingPreOrders.isNotEmpty()) FontWeight.Bold else FontWeight.SemiBold,
+                                color = if (pendingPreOrders.isNotEmpty()) Color(0xFFC25E00) else TextMuted
+                            )
+                            if (pendingPreOrders.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0xFFF95721)
+                                ) {
+                                    Text(
+                                        text = "${pendingPreOrders.size}",
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.White,
+                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Banner Notifikasi Pre-Order Siswa Menunggu Diambil
+            if (pendingPreOrders.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFFFF3ED),
+                    border = BorderStroke(1.dp, Color(0xFFFFD8C2)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showQrDialog = true }
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = Color(0xFFF95721),
+                                modifier = Modifier.size(28.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        imageVector = Icons.Default.Fastfood,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "${pendingPreOrders.size} Pesanan Siswa Menunggu Diambil",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFF451A0D)
+                                )
+                                Text(
+                                    text = "Klik untuk verifikasi & serahkan makanan",
+                                    fontSize = 11.sp,
+                                    color = Color(0xFF8C5338)
+                                )
+                            }
+                        }
+
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFFF95721)
+                        ) {
+                            Text(
+                                text = "Buka",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
                             )
                         }
                     }
@@ -831,114 +920,338 @@ fun KasirHomeScreen(
         }
     }
 
-    // Modal Verifikasi QR Pre-order (Stitch Style)
+    // Modal Verifikasi & Antrean Pre-Order Siswa (Anti-Fraud / Anti-Jahil)
     if (showQrDialog) {
-        var isVerifiedStep by remember { mutableStateOf(false) }
+        val matchedOrder = remember(qrCodeInput, preOrders) {
+            val q = qrCodeInput.trim()
+            if (q.isBlank()) null
+            else preOrders.find {
+                (it.id != null && it.id.equals(q, ignoreCase = true)) ||
+                (it.qrCode != null && it.qrCode.equals(q, ignoreCase = true)) ||
+                (it.id?.take(8)?.equals(q, ignoreCase = true) == true)
+            }
+        }
 
         AlertDialog(
             onDismissRequest = {
                 showQrDialog = false
-                isVerifiedStep = false
+                qrCodeInput = ""
             },
             title = {
-                Text(
-                    text = if (!isVerifiedStep) "Scan QR Pre-Order" else "Verifikasi Fisik Titipan",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp,
-                    color = TextDark
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = CircleShape,
+                            color = Color(0xFFF95721),
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCodeScanner,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Pre-Order Siswa (${pendingPreOrders.size})",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = TextDark
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            showQrDialog = false
+                            qrCodeInput = ""
+                        },
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(Icons.Default.Clear, contentDescription = "Tutup", tint = TextMuted)
+                    }
+                }
             },
             text = {
-                Column {
-                    if (!isVerifiedStep) {
-                        Text(
-                            text = "Masukkan atau scan kode QR voucher pre-order siswa:",
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        SipekaTextField(
-                            value = qrCodeInput,
-                            onValueChange = { qrCodeInput = it },
-                            label = "Kode QR",
-                            placeholder = "Contoh: QR-PREORDER-1043"
-                        )
-                    } else {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = SegmentBg,
-                            modifier = Modifier.fillMaxWidth()
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "Scan QR voucher atau cari kode order untuk verifikasi pengambilan:",
+                        fontSize = 12.sp,
+                        color = TextMuted
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    SipekaTextField(
+                        value = qrCodeInput,
+                        onValueChange = { qrCodeInput = it },
+                        label = "Kode QR / Order ID",
+                        placeholder = "Ketik atau paste kode (cth: QR-PREORDER-...)"
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // JIKA ADA KODE YANG DICOCOKKAN
+                    if (matchedOrder != null) {
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = SegmentBg),
+                            border = BorderStroke(1.dp, if (matchedOrder.isCompleted) Color(0xFFEF4444) else Color(0xFFF95721))
                         ) {
-                            Row(
-                                modifier = Modifier.padding(12.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = "Kode: ${qrCodeInput.ifBlank { "QR-1043" }}",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextDark
-                                )
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    color = GreenSuccessContainer
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     Text(
-                                        text = "SIAP DIAMBIL",
-                                        fontSize = 10.sp,
+                                        text = "#${matchedOrder.id?.take(8)?.uppercase() ?: "-"}",
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = GreenSuccess,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        color = BtnDarkChocolate
                                     )
+
+                                    Surface(
+                                        shape = RoundedCornerShape(6.dp),
+                                        color = if (matchedOrder.isCompleted) Color(0xFFFFEAEA) else GreenSuccessContainer
+                                    ) {
+                                        Text(
+                                            text = if (matchedOrder.isCompleted) "SUDAH PERNAH DIAMBIL" else "MENUNGGU DIAMBIL",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (matchedOrder.isCompleted) Color(0xFFDC2626) else GreenSuccess,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = "👤 ${matchedOrder.displayCustomerName} (${matchedOrder.displayCustomerClass})",
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = TextDark
+                                )
+
+                                if (!matchedOrder.customerNisn.isNullOrBlank()) {
+                                    Text(
+                                        text = "NISN: ${matchedOrder.customerNisn}",
+                                        fontSize = 11.sp,
+                                        color = TextMuted
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                matchedOrder.displayItems.forEach { item ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = "${item.quantity ?: 1}x ${item.displayProductName}",
+                                            fontSize = 11.sp,
+                                            color = TextDark
+                                        )
+                                        Text(
+                                            text = ((item.displayPrice) * (item.quantity ?: 1)).toRupiahFormat(),
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = BtnDarkChocolate
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text("Total Pembayaran:", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                                    Text(
+                                        (matchedOrder.totalAmount ?: 0.0).toRupiahFormat(),
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Black,
+                                        color = BtnDarkChocolate
+                                    )
+                                }
+
+                                if (matchedOrder.isCompleted) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(Color(0xFFFEE2E2), RoundedCornerShape(6.dp))
+                                            .padding(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = Color(0xFFDC2626),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "⛔ Keamanan: Pesanan ini sudah diserahkan sebelumnya!",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFDC2626)
+                                        )
+                                    }
+                                } else {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Button(
+                                        onClick = {
+                                            viewModel.verifyAndCompletePreOrder(matchedOrder.id ?: qrCodeInput)
+                                            showQrDialog = false
+                                            qrCodeInput = ""
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF95721)),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text("Verifikasi & Serahkan Makanan", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                    }
                                 }
                             }
                         }
+                    } else if (qrCodeInput.isNotBlank()) {
+                        Text(
+                            text = "❌ Pesanan tidak ditemukan dengan kode '$qrCodeInput'",
+                            fontSize = 11.sp,
+                            color = Color(0xFFDC2626),
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
-                            border = BorderStroke(1.dp, BorderStitch)
+                    // DAFTAR ANTREAN PRE-ORDER AKTIF
+                    Text(
+                        text = "Antrean Siswa Menunggu Pengambilan:",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextDark
+                    )
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    if (pendingPreOrders.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                    Text("2x Risoles Mayo Keju", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
-                                    Text("Rp 14.000", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = BtnDarkChocolate)
+                            Text(
+                                text = "Tidak ada antrean pre-order saat ini.",
+                                fontSize = 11.sp,
+                                color = TextMuted
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(220.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(pendingPreOrders, key = { it.id ?: "" }) { order ->
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
+                                    border = BorderStroke(1.dp, BorderStitch)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(
+                                                    text = "👤 ${order.displayCustomerName}",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = TextDark
+                                                )
+                                                Text(
+                                                    text = "Kelas: ${order.displayCustomerClass} • #${order.id?.take(8)}",
+                                                    fontSize = 10.sp,
+                                                    color = TextMuted
+                                                )
+                                            }
+
+                                            Text(
+                                                text = (order.totalAmount ?: 0.0).toRupiahFormat(),
+                                                fontSize = 12.sp,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                color = BtnDarkChocolate
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        val itemsSummary = order.displayItems.joinToString(", ") { "${it.quantity ?: 1}x ${it.displayProductName}" }
+                                        if (itemsSummary.isNotBlank()) {
+                                            Text(
+                                                text = "Menu: $itemsSummary",
+                                                fontSize = 10.sp,
+                                                color = Color(0xFF6B4226)
+                                            )
+                                        }
+
+                                        Spacer(modifier = Modifier.height(6.dp))
+
+                                        Button(
+                                            onClick = {
+                                                viewModel.verifyAndCompletePreOrder(order.id ?: "")
+                                                showQrDialog = false
+                                                qrCodeInput = ""
+                                            },
+                                            shape = RoundedCornerShape(8.dp),
+                                            colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate),
+                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                tint = BtnCreamWhite,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Text(
+                                                text = "Verifikasi & Serahkan",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = BtnCreamWhite
+                                            )
+                                        }
+                                    }
                                 }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text("Pemesan: Vina (NIS: 21904) • Status: Lunas QRIS", fontSize = 11.sp, color = TextMuted)
                             }
                         }
                     }
                 }
             },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        if (!isVerifiedStep) {
-                            if (qrCodeInput.isNotBlank()) isVerifiedStep = true
-                        } else {
-                            viewModel.processQrScan(qrCodeInput.ifBlank { "QR-PREORDER-1043" })
-                            showQrDialog = false
-                            isVerifiedStep = false
-                            qrCodeInput = ""
-                        }
-                    },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate, contentColor = BtnCreamWhite)
-                ) {
-                    Text(
-                        text = if (!isVerifiedStep) "Verifikasi Pesanan" else "Serahkan Barang ke Siswa",
-                        fontWeight = FontWeight.Bold,
-                        color = BtnCreamWhite
-                    )
-                }
-            },
+            confirmButton = {},
             dismissButton = {
-                TextButton(onClick = { showQrDialog = false; isVerifiedStep = false }) {
-                    Text("Batal", color = TextMuted)
+                TextButton(onClick = {
+                    showQrDialog = false
+                    qrCodeInput = ""
+                }) {
+                    Text("Tutup", color = TextMuted)
                 }
             },
             containerColor = CardCreamWhite,

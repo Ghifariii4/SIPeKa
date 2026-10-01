@@ -25,6 +25,16 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.LockClock
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -33,6 +43,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -176,6 +187,17 @@ fun ProfilKasirScreen(
     val startingCashState by viewModel.startingCashState.collectAsState()
     val isClockOutLoading by viewModel.isClockOutLoading.collectAsState()
     val clockOutSuccess by viewModel.clockOutSuccess.collectAsState()
+
+    val kasirName by viewModel.kasirName.collectAsState()
+    val kasirNip by viewModel.kasirNip.collectAsState()
+    val isUpdatingKasir by viewModel.isUpdatingKasirProfile.collectAsState()
+
+    var nameInput by remember(kasirName) { mutableStateOf(kasirName) }
+    var nipInput by remember(kasirNip) { mutableStateOf(kasirNip) }
+    var passwordInput by remember { mutableStateOf("") }
+    var confirmPasswordInput by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+    var formError by remember { mutableStateOf<String?>(null) }
 
     val displayModalAwal = remember(currentShift, startingCashState) {
         val shiftStartingCash = currentShift?.startingCash
@@ -381,17 +403,181 @@ fun ProfilKasirScreen(
 
                     Column {
                         Text(
-                            text = "Petugas Kasir 1",
+                            text = kasirName,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = TextDark
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "ID: ${currentShift?.displayKasirId ?: "-"}",
+                            text = "NIP: $kasirNip • ID: ${currentShift?.displayKasirId ?: "-"}",
                             fontSize = 12.sp,
                             color = TextMuted
                         )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Card Edit Informasi Akun Kasir Sendiri
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.5f))
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Edit Informasi Akun Kasir",
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TextDark
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Perbarui nama, NIP, dan kata sandi akun kasir Anda.",
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Text(text = "Nama Lengkap Petugas", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = nameInput,
+                        onValueChange = { nameInput = it; formError = null },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BtnDarkChocolate,
+                            unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(text = "Nomor NIP / ID Kasir", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = nipInput,
+                        onValueChange = { nipInput = it; formError = null },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BtnDarkChocolate,
+                            unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    HorizontalDivider(color = OutlineWarm.copy(alpha = 0.4f))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text(text = "Ganti Kata Sandi (Opsional)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = passwordInput,
+                        onValueChange = { passwordInput = it; formError = null },
+                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        trailingIcon = {
+                            IconButton(onClick = { showPassword = !showPassword }) {
+                                Icon(
+                                    imageVector = if (showPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                    contentDescription = "Toggle Password",
+                                    tint = TextMuted
+                                )
+                            }
+                        },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BtnDarkChocolate,
+                            unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(text = "Konfirmasi Kata Sandi Baru", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    OutlinedTextField(
+                        value = confirmPasswordInput,
+                        onValueChange = { confirmPasswordInput = it; formError = null },
+                        visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BtnDarkChocolate,
+                            unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    formError?.let { err ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(text = err, color = RedError, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    Button(
+                        onClick = {
+                            if (nameInput.isBlank()) {
+                                formError = "Nama kasir tidak boleh kosong."
+                                return@Button
+                            }
+                            if (nipInput.isBlank()) {
+                                formError = "NIP kasir tidak boleh kosong."
+                                return@Button
+                            }
+                            if (passwordInput.isNotBlank()) {
+                                if (passwordInput.length < 6) {
+                                    formError = "Kata sandi minimal 6 karakter."
+                                    return@Button
+                                }
+                                if (passwordInput != confirmPasswordInput) {
+                                    formError = "Konfirmasi kata sandi tidak cocok."
+                                    return@Button
+                                }
+                            }
+                            viewModel.updateKasirProfile(
+                                nameInput,
+                                nipInput,
+                                if (passwordInput.isNotBlank()) passwordInput else null
+                            )
+                            passwordInput = ""
+                            confirmPasswordInput = ""
+                        },
+                        enabled = !isUpdatingKasir,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BtnDarkChocolate,
+                            contentColor = BtnCreamWhite
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(46.dp)
+                    ) {
+                        if (isUpdatingKasir) {
+                            CircularProgressIndicator(color = BtnCreamWhite, modifier = Modifier.size(20.dp))
+                        } else {
+                            Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(text = "Simpan Perubahan Akun", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }

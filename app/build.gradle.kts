@@ -64,6 +64,7 @@ dependencies {
     // DataStore & Gson
     implementation(libs.androidx.datastore.preferences)
     implementation("com.google.code.gson:gson:2.11.0")
+    implementation("com.google.zxing:core:3.5.3")
 
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

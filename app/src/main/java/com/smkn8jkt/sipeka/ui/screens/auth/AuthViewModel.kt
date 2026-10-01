@@ -84,7 +84,13 @@ class AuthViewModel(
                     _userRole.value = role
 
                     if (!token.isNullOrBlank() && tokenManager != null) {
-                        tokenManager.saveAuthData(token, role)
+                        tokenManager.saveAuthData(
+                            token = token,
+                            role = role,
+                            userId = userData?.id,
+                            userName = userData?.name,
+                            userNisn = userData?.nisnNip ?: cleanNisnNip
+                        )
                     }
                     _loginSuccess.value = true
                 } else {

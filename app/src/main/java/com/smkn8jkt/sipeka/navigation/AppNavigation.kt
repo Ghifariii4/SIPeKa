@@ -45,6 +45,9 @@ import com.smkn8jkt.sipeka.ui.screens.admin.AdminViewModelFactory
 import com.smkn8jkt.sipeka.ui.screens.auth.AuthViewModel
 import com.smkn8jkt.sipeka.ui.screens.auth.LoginScreen
 import com.smkn8jkt.sipeka.ui.screens.auth.RegisterScreen
+import com.smkn8jkt.sipeka.ui.screens.pembeli.PembeliHomeScreen
+import com.smkn8jkt.sipeka.ui.screens.pembeli.PembeliViewModel
+import com.smkn8jkt.sipeka.ui.screens.pembeli.PembeliViewModelFactory
 import com.smkn8jkt.sipeka.ui.screens.penitip.PenitipDashboardScreen
 import com.smkn8jkt.sipeka.ui.screens.penitip.PenitipViewModel
 import com.smkn8jkt.sipeka.ui.screens.penitip.PenitipViewModelFactory
@@ -66,6 +69,7 @@ object Screen {
     const val Profile = "profile"
     const val AdminDashboard = "admin_dashboard"
     const val PenitipDashboard = "penitip_dashboard"
+    const val PembeliHome = "pembeli_home"
     const val AccessDenied = "access_denied"
     const val DebugDashboard = "debug_dashboard"
 }
@@ -79,7 +83,8 @@ fun AppNavigation(
     navController: NavHostController = rememberNavController(),
     posViewModel: PosViewModel = viewModel(factory = PosViewModelFactory(tokenManager)),
     adminViewModel: AdminViewModel = viewModel(factory = AdminViewModelFactory(tokenManager)),
-    penitipViewModel: PenitipViewModel = viewModel(factory = PenitipViewModelFactory(tokenManager))
+    penitipViewModel: PenitipViewModel = viewModel(factory = PenitipViewModelFactory(tokenManager)),
+    pembeliViewModel: PembeliViewModel = viewModel(factory = PembeliViewModelFactory(tokenManager))
 ) {
     val currentRole by tokenManager?.roleFlow?.collectAsState(initial = null) ?: remember { mutableStateOf(null) }
     val authUserRole by authViewModel.userRole.collectAsState()
@@ -99,6 +104,10 @@ fun AppNavigation(
                         }
                     } else if (role == "penitip" || role == "penjual") {
                         navController.navigate(Screen.PenitipDashboard) {
+                            popUpTo(Screen.Splash) { inclusive = true }
+                        }
+                    } else if (role == "pembeli" || role == "siswa") {
+                        navController.navigate(Screen.PembeliHome) {
                             popUpTo(Screen.Splash) { inclusive = true }
                         }
                     } else {
@@ -126,6 +135,10 @@ fun AppNavigation(
                         }
                     } else if (userRole == "penitip" || userRole == "penjual") {
                         navController.navigate(Screen.PenitipDashboard) {
+                            popUpTo(Screen.Login) { inclusive = true }
+                        }
+                    } else if (userRole == "pembeli" || userRole == "siswa") {
+                        navController.navigate(Screen.PembeliHome) {
                             popUpTo(Screen.Login) { inclusive = true }
                         }
                     } else if (userRole == "kasir") {
@@ -187,6 +200,13 @@ fun AppNavigation(
                     authViewModel = authViewModel,
                     tokenManager = tokenManager
                 )
+            } else if (role == "pembeli" || role == "siswa") {
+                PembeliHomeScreen(
+                    navController = navController,
+                    tokenManager = tokenManager,
+                    viewModel = pembeliViewModel,
+                    authViewModel = authViewModel
+                )
             } else if (role != null && role != "kasir") {
                 AccessDeniedScreen(
                     userRole = role,
@@ -203,6 +223,15 @@ fun AppNavigation(
                     viewModel = posViewModel
                 )
             }
+        }
+
+        composable(Screen.PembeliHome) {
+            PembeliHomeScreen(
+                navController = navController,
+                tokenManager = tokenManager,
+                viewModel = pembeliViewModel,
+                authViewModel = authViewModel
+            )
         }
 
         composable(Screen.History) {

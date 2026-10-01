@@ -721,7 +721,37 @@ fun RiwayatScreen(
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Spacer(modifier = Modifier.height(6.dp))
+
+                                    if (!order.displayCustomerName.isNullOrBlank() || order.orderType.equals("PRE-ORDER", ignoreCase = true)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = "👤 ${order.displayCustomerName ?: "Siswa"} (${order.displayCustomerClass ?: "Siswa"})",
+                                                fontSize = 11.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = BtnDarkChocolate
+                                            )
+                                            if (order.isPending) {
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = Color(0xFFFEE6D8)
+                                                ) {
+                                                    Text(
+                                                        text = "MENUNGGU DIAMBIL",
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        color = Color(0xFFC25E00),
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                    }
 
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
@@ -797,6 +827,37 @@ fun RiwayatScreen(
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("Waktu:", fontSize = 11.sp, color = TextMuted)
                                 Text(formatOrderDate(order.displayCreatedAt), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                            }
+
+                            if (!order.displayCustomerName.isNullOrBlank() || order.orderType.equals("PRE-ORDER", ignoreCase = true)) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Pemesan (Siswa):", fontSize = 11.sp, color = TextMuted)
+                                    Text(order.displayCustomerName ?: "-", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Kelas / NISN:", fontSize = 11.sp, color = TextMuted)
+                                    Text("${order.displayCustomerClass ?: "-"} (${order.customerNisn ?: "-"})", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                                }
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Status Ambil:", fontSize = 11.sp, color = TextMuted)
+                                    Text(
+                                        text = if (order.isPending) "Menunggu Diambil" else "Sudah Diambil",
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (order.isPending) Color(0xFFC25E00) else GreenSuccess
+                                    )
+                                }
+                            }
+
+                            if (!order.kasirName.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Petugas Kasir:", fontSize = 11.sp, color = TextMuted)
+                                    Text(order.kasirName ?: "-", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                                }
                             }
                         }
                     }
@@ -883,13 +944,34 @@ fun RiwayatScreen(
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = { viewModel.clearOrderDetail() },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate, contentColor = BtnCreamWhite),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Tutup", fontWeight = FontWeight.Bold)
+                if (order.isPending) {
+                    Button(
+                        onClick = {
+                            viewModel.verifyAndCompletePreOrder(order.id ?: "")
+                            viewModel.clearOrderDetail()
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF95721), contentColor = Color.White),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Verifikasi & Serahkan Makanan", fontWeight = FontWeight.Bold, color = Color.White)
+                    }
+                } else {
+                    Button(
+                        onClick = { viewModel.clearOrderDetail() },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate, contentColor = BtnCreamWhite),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Tutup", fontWeight = FontWeight.Bold)
+                    }
+                }
+            },
+            dismissButton = {
+                if (order.isPending) {
+                    TextButton(onClick = { viewModel.clearOrderDetail() }) {
+                        Text("Batal", color = TextMuted)
+                    }
                 }
             },
             containerColor = CardCreamWhite,

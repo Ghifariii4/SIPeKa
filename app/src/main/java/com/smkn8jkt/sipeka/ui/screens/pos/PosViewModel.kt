@@ -44,9 +44,27 @@ class PosViewModel(
     private val _currentShiftData = MutableStateFlow<ShiftData?>(null)
     val currentShiftData: StateFlow<ShiftData?> = _currentShiftData.asStateFlow()
 
+    // --- Identitas Kasir ---
+    val kasirName: StateFlow<String> = (tokenManager?.kasirNameFlow ?: MutableStateFlow("Petugas Kasir 1"))
+        .stateIn(viewModelScope, SharingStarted.Eagerly, tokenManager?.getKasirNameSync() ?: "Petugas Kasir 1")
+
+    val kasirNip: StateFlow<String> = (tokenManager?.kasirNipFlow ?: MutableStateFlow("19820512"))
+        .stateIn(viewModelScope, SharingStarted.Eagerly, "19820512")
+
+    private val _isUpdatingKasirProfile = MutableStateFlow(false)
+    val isUpdatingKasirProfile: StateFlow<Boolean> = _isUpdatingKasirProfile.asStateFlow()
+
+    private val _updateProfileSuccess = MutableStateFlow<String?>(null)
+    val updateProfileSuccess: StateFlow<String?> = _updateProfileSuccess.asStateFlow()
+
     // --- History & QR States ---
     private val _orderHistory = MutableStateFlow<List<OrderData>>(emptyList())
     val orderHistory: StateFlow<List<OrderData>> = _orderHistory.asStateFlow()
+
+    // Antrean Pre-Order Siswa yang belum diambil maupun sudah selesai
+    val preOrders: StateFlow<List<OrderData>> = _orderHistory.map { orders ->
+        orders.filter { it.orderType.equals("PRE-ORDER", ignoreCase = true) || !it.qrCode.isNullOrBlank() }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     private val _selectedOrderDetail = MutableStateFlow<OrderData?>(null)
     val selectedOrderDetail: StateFlow<OrderData?> = _selectedOrderDetail.asStateFlow()
@@ -109,12 +127,18 @@ class PosViewModel(
     init {
         fetchProducts()
         checkCurrentShift()
+        fetchHistory()
         tokenManager?.let { tm ->
             viewModelScope.launch {
                 tm.startingCashFlow.collect { cash ->
                     if (cash > 0) {
                         _startingCash.value = cash
                     }
+                }
+            }
+            viewModelScope.launch {
+                tm.sharedOrdersFlow.collect {
+                    fetchHistory()
                 }
             }
         }
@@ -197,14 +221,21 @@ class PosViewModel(
             _isLoading.value = true
             _errorMessage.value = null
             try {
-                val response = apiService.getOrders()
-                if (response.isSuccessful && response.body()?.data != null) {
-                    _orderHistory.value = response.body()?.data ?: emptyList()
-                } else {
-                    _orderHistory.value = emptyList()
+                val serverOrders = try {
+                    val response = apiService.getOrders()
+                    if (response.isSuccessful && response.body()?.data != null) {
+                        response.body()?.data ?: emptyList()
+                    } else emptyList()
+                } catch (_: Exception) {
+                    emptyList()
                 }
+
+                val sharedOrders = tokenManager?.getSharedOrdersSync() ?: emptyList()
+
+                // Gabungkan pesanan shared dan pesanan server (prioritaskan status shared terbaru)
+                val merged = (sharedOrders + serverOrders).distinctBy { it.id ?: it.qrCode }
+                _orderHistory.value = merged
             } catch (e: Exception) {
-                _orderHistory.value = emptyList()
                 _errorMessage.value = e.localizedMessage ?: "Gagal memuat riwayat"
             } finally {
                 _isLoading.value = false
@@ -234,33 +265,103 @@ class PosViewModel(
         _selectedOrderDetail.value = null
     }
 
-    fun processQrScan(qrCode: String) {
-        if (qrCode.isBlank()) return
+    // --- KEAMANAN & VERIFIKASI PENGAMBILAN PRE-ORDER (ANTI-FRAUD / ANTI-JAHIL) ---
+    fun verifyAndCompletePreOrder(orderIdOrQr: String) {
+        val cleanQuery = orderIdOrQr.trim()
+        if (cleanQuery.isBlank()) {
+            _qrScanMessage.value = "Mohon masukkan nomor pesanan atau scan QR Code."
+            return
+        }
+
+        if (!_isShiftOpen.value) {
+            _qrScanMessage.value = "⛔ Shift kasir belum dibuka! Harap Clock-In shift terlebih dahulu sebelum melayani penyerahan pesanan."
+            return
+        }
+
         viewModelScope.launch {
+            _isDetailLoading.value = true
+            _qrScanMessage.value = null
+
             try {
-                val response = apiService.scanQrCode(qrCode)
-                if (response.isSuccessful) {
-                    val msg = response.body()?.data?.message ?: "Pesanan Pre-order ($qrCode) berhasil diproses"
-                    _qrScanMessage.value = msg
-                } else {
-                    val errorString = response.errorBody()?.string()
-                    val parsedError = if (!errorString.isNullOrBlank()) {
-                        try {
-                            val gson = Gson()
-                            val baseError = gson.fromJson(errorString, BaseResponse::class.java)
-                            baseError.message ?: "Gagal memproses QR."
-                        } catch (e: Exception) {
-                            "Gagal memproses QR (${response.code()})."
-                        }
-                    } else {
-                        "Gagal memproses QR."
-                    }
-                    _qrScanMessage.value = parsedError
-                }
+                val currentKasir = tokenManager?.getKasirNameSync() ?: "Petugas Kasir 1"
+
+                // 1. Eksekusi verifikasi anti-fraud di sistem penyimpanan bersama
+                val (success, message) = tokenManager?.completeSharedOrder(cleanQuery, currentKasir)
+                    ?: Pair(false, "Sistem penyimpanan pesanan tidak dapat diakses.")
+
+                // 2. Kirim update ke endpoint backend jika terhubung
+                try {
+                    apiService.scanQrCode(cleanQuery)
+                } catch (_: Exception) {}
+
+                _qrScanMessage.value = message
+                fetchHistory()
+                fetchProducts() // Update ketersediaan stok
             } catch (e: Exception) {
-                _qrScanMessage.value = e.localizedMessage ?: "Terjadi kesalahan koneksi"
+                _qrScanMessage.value = "Terjadi kendala saat memproses pesanan: ${e.localizedMessage}"
+            } finally {
+                _isDetailLoading.value = false
             }
         }
+    }
+
+    fun processQrScan(qrCode: String) {
+        verifyAndCompletePreOrder(qrCode)
+    }
+
+    // --- UPDATE PROFIL KASIR SENDIRI ---
+    fun updateKasirProfile(name: String, nip: String, newPassword: String? = null) {
+        val cleanName = name.trim()
+        val cleanNip = nip.trim()
+        val cleanPw = newPassword?.trim()
+
+        if (cleanName.isBlank()) {
+            _errorMessage.value = "Nama kasir tidak boleh kosong."
+            return
+        }
+        if (cleanNip.isBlank()) {
+            _errorMessage.value = "NIP kasir tidak boleh kosong."
+            return
+        }
+        if (!cleanPw.isNullOrBlank() && cleanPw.length < 6) {
+            _errorMessage.value = "Kata sandi baru minimal 6 karakter."
+            return
+        }
+
+        viewModelScope.launch {
+            _isUpdatingKasirProfile.value = true
+            _errorMessage.value = null
+            _updateProfileSuccess.value = null
+
+            try {
+                val currentId = tokenManager?.getUserIdSync()
+                tokenManager?.saveKasirProfile(cleanName, cleanNip)
+                tokenManager?.saveUserProfile(id = currentId, name = cleanName, nisn = cleanNip)
+
+                if (!currentId.isNullOrBlank()) {
+                    try {
+                        val updatePayload = com.smkn8jkt.sipeka.data.model.UserData(
+                            id = currentId,
+                            name = cleanName,
+                            nisnNip = cleanNip,
+                            password = if (!cleanPw.isNullOrBlank()) cleanPw else null,
+                            role = "kasir"
+                        )
+                        apiService.updateUser(currentId, updatePayload)
+                    } catch (_: Exception) {}
+                }
+
+                _updateProfileSuccess.value = "Informasi akun kasir berhasil diperbarui!"
+            } catch (e: Exception) {
+                _errorMessage.value = "Gagal memperbarui profil: ${e.localizedMessage}"
+            } finally {
+                _isUpdatingKasirProfile.value = false
+            }
+        }
+    }
+
+    fun clearUpdateSuccess() {
+        _updateProfileSuccess.value = null
     }
 
     fun clearQrScanMessage() {

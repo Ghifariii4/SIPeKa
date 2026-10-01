@@ -9,6 +9,7 @@ import com.google.gson.Gson
 import com.smkn8jkt.sipeka.data.model.AddProductRequest
 import com.smkn8jkt.sipeka.data.model.BaseResponse
 import com.smkn8jkt.sipeka.data.model.PenitipDashboardResponse
+import com.smkn8jkt.sipeka.data.model.UserData
 import com.smkn8jkt.sipeka.data.remote.ApiClient
 import com.smkn8jkt.sipeka.data.remote.ApiService
 import com.smkn8jkt.sipeka.data.remote.TokenManager
@@ -46,10 +47,43 @@ class PenitipViewModel(
     private val _successMessage = MutableStateFlow<String?>(null)
     val successMessage: StateFlow<String?> = _successMessage.asStateFlow()
 
+    // --- State Profil Penitip ---
+    private val _penitipName = MutableStateFlow("Ibu Sari (Dapur PKK)")
+    val penitipName: StateFlow<String> = _penitipName.asStateFlow()
+
+    private val _penitipNip = MutableStateFlow("PNT-8821")
+    val penitipNip: StateFlow<String> = _penitipNip.asStateFlow()
+
+    private val _penitipShop = MutableStateFlow("Kantin PKK Sejahtera")
+    val penitipShop: StateFlow<String> = _penitipShop.asStateFlow()
+
+    private val _isUpdatingPenitipProfile = MutableStateFlow(false)
+    val isUpdatingPenitipProfile: StateFlow<Boolean> = _isUpdatingPenitipProfile.asStateFlow()
+
+    private val _updateProfileSuccess = MutableStateFlow<String?>(null)
+    val updateProfileSuccess: StateFlow<String?> = _updateProfileSuccess.asStateFlow()
+
     private val deletedProductIds = mutableSetOf<String>()
 
     init {
         fetchDashboard()
+        tokenManager?.let { tm ->
+            viewModelScope.launch {
+                tm.penitipNameFlow.collect { name ->
+                    if (!name.isNullOrBlank()) _penitipName.value = name
+                }
+            }
+            viewModelScope.launch {
+                tm.penitipNipFlow.collect { nip ->
+                    if (!nip.isNullOrBlank()) _penitipNip.value = nip
+                }
+            }
+            viewModelScope.launch {
+                tm.penitipShopFlow.collect { shop ->
+                    if (!shop.isNullOrBlank()) _penitipShop.value = shop
+                }
+            }
+        }
     }
 
     fun fetchDashboard() {
@@ -312,6 +346,56 @@ class PenitipViewModel(
     fun clearMessages() {
         _errorMessage.value = null
         _successMessage.value = null
+    }
+
+    fun clearUpdateSuccess() {
+        _updateProfileSuccess.value = null
+    }
+
+    fun updatePenitipProfile(name: String, nip: String, shopName: String, newPassword: String? = null) {
+        val cleanName = name.trim()
+        val cleanNip = nip.trim()
+        val cleanShop = shopName.trim()
+        val cleanPw = newPassword?.trim()
+
+        if (cleanName.isBlank()) {
+            _errorMessage.value = "Nama pemilik / penanggung jawab tidak boleh kosong."
+            return
+        }
+
+        viewModelScope.launch {
+            _isUpdatingPenitipProfile.value = true
+            _errorMessage.value = null
+            _updateProfileSuccess.value = null
+
+            try {
+                _penitipName.value = cleanName
+                if (cleanNip.isNotBlank()) _penitipNip.value = cleanNip
+                if (cleanShop.isNotBlank()) _penitipShop.value = cleanShop
+
+                tokenManager?.savePenitipProfile(cleanName, cleanNip.ifBlank { null }, cleanShop.ifBlank { null })
+
+                val currentId = tokenManager?.getUserIdSync()
+                if (!currentId.isNullOrBlank()) {
+                    try {
+                        val updatePayload = UserData(
+                            id = currentId,
+                            name = cleanName,
+                            nisnNip = if (cleanNip.isNotBlank()) cleanNip else null,
+                            password = if (!cleanPw.isNullOrBlank()) cleanPw else null,
+                            role = "penitip"
+                        )
+                        apiService.updateUser(currentId, updatePayload)
+                    } catch (_: Exception) {}
+                }
+
+                _updateProfileSuccess.value = "Informasi akun penitip berhasil diperbarui!"
+            } catch (e: Exception) {
+                _errorMessage.value = "Gagal memperbarui profil: ${e.localizedMessage}"
+            } finally {
+                _isUpdatingPenitipProfile.value = false
+            }
+        }
     }
 
     private fun parseErrorMessage(errorString: String?, defaultMsg: String): String {

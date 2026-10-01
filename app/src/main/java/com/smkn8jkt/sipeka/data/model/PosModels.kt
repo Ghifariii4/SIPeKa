@@ -50,7 +50,11 @@ data class OrderItemRequest(
 )
 
 data class OrderRequest(
-    @SerializedName("items") val items: List<OrderItemRequest>
+    @SerializedName("items") val items: List<OrderItemRequest>,
+    @SerializedName("pembeli_id") val pembeliId: String? = null,
+    @SerializedName("user_id") val userId: String? = null,
+    @SerializedName("customer_name") val customerName: String? = null,
+    @SerializedName("order_type") val orderType: String? = "PRE-ORDER"
 )
 
 // Cart Model for ViewModel State
@@ -77,6 +81,8 @@ data class UserData(
     @SerializedName("name") val name: String? = null,
     @SerializedName("role") val role: String? = null,
     @SerializedName("status") val status: String? = null,
+    @SerializedName("kelas") val kelas: String? = null,
+    @SerializedName("password") val password: String? = null,
     @SerializedName("is_approved") val isApproved: Boolean? = null,
     @SerializedName("isApproved") val isApprovedAlt: Boolean? = null,
     @SerializedName("approved") val approved: Boolean? = null
@@ -130,13 +136,20 @@ data class OrderData(
     @SerializedName("id") val id: String? = null,
     @SerializedName("pembeli_id") val pembeliId: String? = null,
     @SerializedName("user_id") val userId: String? = null,
+    @SerializedName("user_name") val userName: String? = null,
+    @SerializedName("customer_name") val customerName: String? = null,
+    @SerializedName("customer_class") val customerClass: String? = null,
+    @SerializedName("customer_nisn") val customerNisn: String? = null,
+    @SerializedName("user") val user: UserData? = null,
     @SerializedName("shift_id") val shiftId: String? = null,
+    @SerializedName("kasir_name") val kasirName: String? = null,
     @SerializedName("qr_code") val qrCode: String? = null,
     @SerializedName("total_amount") val totalAmount: Double? = null,
     @SerializedName("order_type") val orderType: String? = null,
     @SerializedName("status") val status: String? = null,
     @SerializedName("created_at") val createdAt: String? = null,
     @SerializedName("createdAt") val createdAtAlt: String? = null,
+    @SerializedName("completed_at") val completedAt: String? = null,
     @SerializedName("items") val items: List<OrderItemData>? = null,
     @SerializedName("OrderItems") val orderItems: List<OrderItemData>? = null,
     @SerializedName("order_items") val orderItemsSnake: List<OrderItemData>? = null
@@ -144,8 +157,23 @@ data class OrderData(
     val displayCreatedAt: String
         get() = createdAt ?: createdAtAlt ?: ""
 
+    val displayCustomerName: String
+        get() = customerName ?: userName ?: user?.name ?: "Siswa SMKN 8"
+
+    val displayCustomerClass: String
+        get() = customerClass ?: user?.kelas ?: "XII RPL"
+
     val displayItems: List<OrderItemData>
         get() = items ?: orderItems ?: orderItemsSnake ?: emptyList()
+
+    val isCompleted: Boolean
+        get() = status.equals("completed", ignoreCase = true) ||
+                status.equals("sukses", ignoreCase = true) ||
+                status.equals("selesai", ignoreCase = true) ||
+                !completedAt.isNullOrBlank()
+
+    val isPending: Boolean
+        get() = !isCompleted
 }
 
 data class OrderItemData(

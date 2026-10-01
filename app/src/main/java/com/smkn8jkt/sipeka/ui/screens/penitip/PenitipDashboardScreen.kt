@@ -31,24 +31,34 @@ import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddAPhoto
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.Storefront
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -118,7 +128,14 @@ fun PenitipDashboardScreen(
     val errorMessage by viewModel.errorMessage.collectAsState()
     val successMessage by viewModel.successMessage.collectAsState()
 
+    val penitipName by viewModel.penitipName.collectAsState()
+    val penitipNip by viewModel.penitipNip.collectAsState()
+    val penitipShop by viewModel.penitipShop.collectAsState()
+    val isUpdatingProfile by viewModel.isUpdatingPenitipProfile.collectAsState()
+    val updateProfileSuccess by viewModel.updateProfileSuccess.collectAsState()
+
     var showAddDialog by remember { mutableStateOf(false) }
+    var showProfileDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchDashboard()
@@ -128,6 +145,14 @@ fun PenitipDashboardScreen(
         if (isAddSuccess) {
             showAddDialog = false
             viewModel.resetAddSuccess()
+        }
+    }
+
+    LaunchedEffect(updateProfileSuccess) {
+        updateProfileSuccess?.let { msg ->
+            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+            showProfileDialog = false
+            viewModel.clearUpdateSuccess()
         }
     }
 
@@ -212,6 +237,13 @@ fun PenitipDashboardScreen(
                             tint = TextLight
                         )
                     }
+                    IconButton(onClick = { showProfileDialog = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = "Profil Akun",
+                            tint = TextLight
+                        )
+                    }
                     IconButton(
                         onClick = {
                             scope.launch {
@@ -253,6 +285,76 @@ fun PenitipDashboardScreen(
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
         ) {
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // INFORMASI AKUN MITRA PENITIP CARD
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
+                border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.5f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(14.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(44.dp)
+                                .clip(CircleShape)
+                                .background(BgWarmTan.copy(alpha = 0.45f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Storefront,
+                                contentDescription = "Toko",
+                                tint = BtnDarkChocolate,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column {
+                            Text(
+                                text = penitipShop.ifBlank { "Kantin PKK Sejahtera" },
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextDark
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "$penitipName • NIP/Kontak: $penitipNip",
+                                fontSize = 11.sp,
+                                color = TextMuted
+                            )
+                        }
+                    }
+
+                    OutlinedButton(
+                        onClick = { showProfileDialog = true },
+                        shape = RoundedCornerShape(10.dp),
+                        border = BorderStroke(1.dp, BtnDarkChocolate),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = "Edit Profil",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BtnDarkChocolate
+                        )
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
 
             // HEADER CARD: PENDAPATAN BELUM DICAIRKAN (Dark Espresso Gradient)
@@ -428,6 +530,20 @@ fun PenitipDashboardScreen(
             onDismiss = { showAddDialog = false },
             onConfirmUpload = { imageUri, name, price, desc, stock ->
                 viewModel.uploadProduct(context, imageUri, name, price, desc, stock)
+            }
+        )
+    }
+
+    // DIALOG EDIT INFORMASI AKUN PENITIP
+    if (showProfileDialog) {
+        EditProfilPenitipDialog(
+            initialName = penitipName,
+            initialNip = penitipNip,
+            initialShop = penitipShop,
+            isLoading = isUpdatingProfile,
+            onDismiss = { showProfileDialog = false },
+            onSave = { name, nip, shop, newPw ->
+                viewModel.updatePenitipProfile(name, nip, shop, newPw)
             }
         )
     }
@@ -714,6 +830,171 @@ fun AddProductDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
+                Text("Batal", color = TextMuted)
+            }
+        },
+        containerColor = CardCreamWhite,
+        shape = RoundedCornerShape(18.dp)
+    )
+}
+
+@Composable
+fun EditProfilPenitipDialog(
+    initialName: String,
+    initialNip: String,
+    initialShop: String,
+    isLoading: Boolean,
+    onDismiss: () -> Unit,
+    onSave: (name: String, nip: String, shop: String, newPassword: String?) -> Unit
+) {
+    var nameInput by remember(initialName) { mutableStateOf(initialName) }
+    var nipInput by remember(initialNip) { mutableStateOf(initialNip) }
+    var shopInput by remember(initialShop) { mutableStateOf(initialShop) }
+    var passwordInput by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+    var formError by remember { mutableStateOf<String?>(null) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.Person,
+                    contentDescription = null,
+                    tint = BtnDarkChocolate,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Edit Informasi Akun Penitip",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    color = TextDark
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Text(
+                    text = "Perbarui data pemilik, nama brand titipan, dan kata sandi akun Anda.",
+                    fontSize = 12.sp,
+                    color = TextMuted
+                )
+
+                Spacer(modifier = Modifier.height(14.dp))
+
+                Text(text = "Nama Pemilik / Penanggung Jawab", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = nameInput,
+                    onValueChange = { nameInput = it; formError = null },
+                    singleLine = true,
+                    placeholder = { Text("Contoh: Ibu Sari", fontSize = 13.sp) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BtnDarkChocolate,
+                        unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(text = "Nama Toko / Usaha Titipan", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = shopInput,
+                    onValueChange = { shopInput = it; formError = null },
+                    singleLine = true,
+                    placeholder = { Text("Contoh: Kantin PKK Sejahtera", fontSize = 13.sp) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BtnDarkChocolate,
+                        unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(text = "NIP / Nomor Kontak", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = nipInput,
+                    onValueChange = { nipInput = it; formError = null },
+                    singleLine = true,
+                    placeholder = { Text("Contoh: PNT-8821 atau 0812...", fontSize = 13.sp) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BtnDarkChocolate,
+                        unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Text(text = "Password Baru (Opsional)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = passwordInput,
+                    onValueChange = { passwordInput = it; formError = null },
+                    singleLine = true,
+                    placeholder = { Text("Kosongkan jika tidak ingin diubah", fontSize = 13.sp) },
+                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        IconButton(onClick = { showPassword = !showPassword }) {
+                            Icon(
+                                imageVector = if (showPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = "Toggle Password",
+                                tint = TextMuted
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = BtnDarkChocolate,
+                        unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                formError?.let { err ->
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = err, color = RedError, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (nameInput.isBlank()) {
+                        formError = "Nama pemilik tidak boleh kosong."
+                        return@Button
+                    }
+                    if (passwordInput.isNotBlank() && passwordInput.length < 6) {
+                        formError = "Password minimal 6 karakter."
+                        return@Button
+                    }
+                    onSave(nameInput, nipInput, shopInput, passwordInput.ifBlank { null })
+                },
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(color = BtnCreamWhite, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
+                Text("Simpan Perubahan", fontWeight = FontWeight.Bold, color = BtnCreamWhite)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isLoading) {
                 Text("Batal", color = TextMuted)
             }
         },
