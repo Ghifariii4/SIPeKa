@@ -40,3 +40,6 @@ Setiap AI Agent yang beroperasi pada repositori ini harus mematuhi panduan dan b
 ## 6. Keamanan Repositori Git (Zero-Leak Policy)
 - Jangan pernah meng-unignore `local.properties`, keystore penandatanganan (`*.jks`, `*.keystore`), file `.env`, atau kredensial rahasia.
 - Jangan menulis token autentikasi atau password secara hardcode di dalam kode sumber.
+
+## 7. Otomasi Git Commit & Push (Continuous Delivery)
+- Setiap kali ada perubahan atau pembaruan kode yang telah teruji lolos validasi `gradlew compileDebugKotlin testDebugUnitTest`, lakukan commit terstruktur dan push ke remote `origin/master`.

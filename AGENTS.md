@@ -45,7 +45,11 @@ Setiap agen yang memodifikasi basis kode ini **WAJIB MEMATUHI ATURAN BERIKUT TAN
 ### 🔒 ATURAN 5: Keamanan Repositori Git (Zero Leak Tolerance)
 - Jangan pernah melakukan commit file kredensial sensitif: `local.properties`, `*.jks`, `*.keystore`, `.env`, atau secret files.
 - Jangan meletakkan token rahasia, API secret, atau sandi pribadi secara *hardcoded* dalam kode Kotlin.
-- Pastikan `.gitignore` tetap melindungi file-file kunci penandatanganan dan konfigurasi lokal Android SDK.
+### 🚀 ATURAN 6: Otomasi Git Commit & Push (Auto Commit & Push)
+- Setiap kali ada pembaruan kode, perbaikan fitur, atau penambahan fungsionalitas yang telah diverifikasi lolos kompilasi (`compileDebugKotlin`) dan testing (`testDebugUnitTest`), AI Agent wajib:
+  1. Melakukan staging seluruh perubahan aman: `git add .`
+  2. Membuat *commit message* yang deskriptif dan terstruktur sesuai fitur yang diubah.
+  3. Mendorong (*push*) perubahan secara otomatis ke branch aktif di remote: `git push origin master`.
 
 ---
 
