@@ -15,19 +15,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.filled.Receipt
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -61,6 +66,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -87,41 +93,50 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
+fun parseSafeDate(isoString: String?): Date? {
+    if (isoString.isNullOrBlank()) return null
+    return try {
+        if (isoString.endsWith("Z")) {
+            val fmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            fmt.timeZone = TimeZone.getTimeZone("UTC")
+            fmt.parse(isoString)
+        } else {
+            val fmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
+            fmt.parse(isoString)
+        }
+    } catch (_: Exception) {
+        try {
+            SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(isoString.take(10))
+        } catch (_: Exception) {
+            null
+        }
+    }
+}
+
 fun formatOrderDate(isoString: String?): String {
     if (isoString.isNullOrBlank()) return "-"
+    val parsed = parseSafeDate(isoString) ?: return isoString
     return try {
-        val inputFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-        inputFormatter.timeZone = TimeZone.getTimeZone("UTC")
-        val date = inputFormatter.parse(isoString)
-        val outputFormatter = SimpleDateFormat("dd MMM yyyy, HH:mm 'WIB'", Locale.getDefault())
-        outputFormatter.timeZone = TimeZone.getDefault()
-        if (date != null) outputFormatter.format(date) else isoString
+        val outputFormatter = SimpleDateFormat("dd MMM yyyy, HH:mm 'WIB'", Locale.forLanguageTag("id-ID"))
+        outputFormatter.format(parsed)
     } catch (_: Exception) {
         isoString
     }
 }
 
 fun formatDayGroupHeader(isoString: String?, shiftId: String?): String {
-    // Potong shift ID menjadi maks 6 karakter supaya header tidak boros ruang
     val shortShiftId = shiftId?.take(6)?.uppercase()
-    if (isoString.isNullOrBlank()) return if (!shortShiftId.isNullOrBlank()) "Shift #$shortShiftId" else "Shift Aktif"
-    return try {
-        val inputFormatter = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-        inputFormatter.timeZone = TimeZone.getTimeZone("UTC")
-        val date = inputFormatter.parse(isoString)
-        val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-        val orderDayStr = date?.let { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it) }
+    val parsed = parseSafeDate(isoString)
+    val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+    val orderDayStr = parsed?.let { SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(it) } ?: isoString?.take(10)
 
-        val dayLabel = when (orderDayStr) {
-            todayStr -> "Hari Ini"
-            else -> date?.let { SimpleDateFormat("EEEE, dd MMM yyyy", Locale.getDefault()).format(it) } ?: "Tanggal -"
-        }
-
-        val shiftLabel = if (!shortShiftId.isNullOrBlank()) " • Shift #$shortShiftId" else ""
-        "$dayLabel$shiftLabel"
-    } catch (_: Exception) {
-        if (!shortShiftId.isNullOrBlank()) "Shift #$shortShiftId" else "Shift Aktif"
+    val dayLabel = when (orderDayStr) {
+        todayStr -> "Hari Ini"
+        else -> parsed?.let { SimpleDateFormat("EEEE, dd MMM yyyy", Locale.forLanguageTag("id-ID")).format(it) } ?: "Tanggal Lain"
     }
+
+    val shiftLabel = if (!shortShiftId.isNullOrBlank()) " • Shift #$shortShiftId" else ""
+    return "$dayLabel$shiftLabel"
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -139,38 +154,46 @@ fun RiwayatScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedFilterTab by remember { mutableStateOf("Shift Aktif") }
 
-    val filterTabs = remember { listOf("Shift Aktif", "Hari Ini", "Semua") }
+    val filterTabs = remember { listOf("Shift Aktif", "Pre-Order QR", "Kasir Tunai", "Hari Ini", "Semua") }
 
     LaunchedEffect(Unit) {
         viewModel.fetchHistory()
         viewModel.fetchCurrentShift()
     }
 
-    // Filter daftar berdasarkan tab dan pencarian
+    // Filter daftar berdasarkan tab dan pencarian cerdas
     val filteredList = remember(historyList, searchQuery, selectedFilterTab, currentShiftData) {
         val activeShiftId = currentShiftData?.id
         val todayStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+        val q = searchQuery.trim().lowercase()
 
         historyList.filter { order ->
-            val matchesSearch = searchQuery.isBlank() ||
-                    (order.id ?: "").contains(searchQuery, ignoreCase = true) ||
-                    (order.status ?: "").contains(searchQuery, ignoreCase = true)
+            val matchesSearch = q.isBlank() ||
+                    (order.id ?: "").lowercase().contains(q) ||
+                    (order.qrCode ?: "").lowercase().contains(q) ||
+                    (order.customerName ?: "").lowercase().contains(q) ||
+                    (order.customerClass ?: "").lowercase().contains(q) ||
+                    (order.customerNisn ?: "").lowercase().contains(q) ||
+                    (order.status ?: "").lowercase().contains(q) ||
+                    (order.orderType ?: "").lowercase().contains(q) ||
+                    (order.kasirName ?: "").lowercase().contains(q) ||
+                    order.displayItems.any { it.displayProductName.lowercase().contains(q) }
+
+            val orderDateStr = order.completedAt ?: order.createdAt ?: ""
+            val isToday = orderDateStr.take(10) == todayStr
+            val isPreOrder = order.orderType.equals("PRE-ORDER", ignoreCase = true) || !order.qrCode.isNullOrBlank()
 
             val matchesTab = when (selectedFilterTab) {
-                "Shift Aktif" -> activeShiftId.isNullOrBlank() || order.shiftId == activeShiftId
-                "Hari Ini" -> {
-                    val orderDateStr = try {
-                        val inputFmt = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-                        inputFmt.timeZone = TimeZone.getTimeZone("UTC")
-                        order.displayCreatedAt.let {
-                            val parsed = inputFmt.parse(it)
-                            parsed?.let { d -> SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(d) }
-                        }
-                    } catch (_: Exception) {
-                        null
+                "Shift Aktif" -> {
+                    if (activeShiftId.isNullOrBlank()) {
+                        order.shiftId == "SHIFT-ACTIVE" || isToday || order.isCompleted
+                    } else {
+                        order.shiftId == activeShiftId || (order.isCompleted && (order.shiftId == "SHIFT-ACTIVE" || isToday))
                     }
-                    orderDateStr == todayStr
                 }
+                "Pre-Order QR" -> isPreOrder
+                "Kasir Tunai" -> !isPreOrder
+                "Hari Ini" -> isToday
                 else -> true
             }
 
@@ -178,12 +201,21 @@ fun RiwayatScreen(
         }
     }
 
-    val totalSalesAmount = remember(filteredList) {
-        filteredList.sumOf { it.totalAmount ?: 0.0 }
+    // Pisahkan order yang sudah selesai/lunas untuk perhitungan saldo kas yang akurat
+    val completedOrders = remember(filteredList) {
+        filteredList.filter { it.isCompleted }
     }
 
-    val totalItemsSold = remember(filteredList) {
-        filteredList.sumOf { order -> order.displayItems.sumOf { it.quantity ?: 1 } }
+    val pendingOrdersCount = remember(filteredList) {
+        filteredList.count { it.isPending }
+    }
+
+    val totalSalesAmount = remember(completedOrders) {
+        completedOrders.sumOf { it.totalAmount ?: 0.0 }
+    }
+
+    val totalItemsSold = remember(completedOrders) {
+        completedOrders.sumOf { order -> order.displayItems.sumOf { it.quantity ?: 1 } }
     }
 
     val kasPkkAmount = remember(totalItemsSold) {
@@ -195,7 +227,7 @@ fun RiwayatScreen(
     }
 
     val groupedOrders = remember(filteredList) {
-        filteredList.groupBy { formatDayGroupHeader(it.displayCreatedAt, it.shiftId) }
+        filteredList.groupBy { formatDayGroupHeader(it.completedAt ?: it.displayCreatedAt, it.shiftId) }
     }
 
     Scaffold(
@@ -207,7 +239,12 @@ fun RiwayatScreen(
                 shadowElevation = 4.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
                     // Profile & sync row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -352,8 +389,7 @@ fun RiwayatScreen(
         bottomBar = {
             NavigationBar(
                 containerColor = CardCreamWhite,
-                tonalElevation = 8.dp,
-                modifier = Modifier.height(64.dp)
+                tonalElevation = 8.dp
             ) {
                 NavigationBarItem(
                     selected = false,
@@ -399,16 +435,21 @@ fun RiwayatScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 14.dp,
+                bottom = 32.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(14.dp))
-
             // Bento-Style Financial Recap Card Sesuai Stitch Mockup
-            Card(
+            item {
+                Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Transparent),
@@ -453,8 +494,8 @@ fun RiwayatScreen(
                                 color = BtnMocha.copy(alpha = 0.45f)
                             ) {
                                 Text(
-                                    text = "${filteredList.size} Transaksi",
-                                    fontSize = 11.sp,
+                                    text = if (pendingOrdersCount > 0) "${completedOrders.size} Sukses • $pendingOrdersCount Menunggu" else "${completedOrders.size} Sukses",
+                                    fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = BtnCreamWhite,
                                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
@@ -548,88 +589,86 @@ fun RiwayatScreen(
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Filter Tabs (Pill Chips)
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(filterTabs) { tab ->
-                    val isSelected = tab == selectedFilterTab
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
-                        border = if (!isSelected) BorderStroke(1.dp, BorderStitch) else null,
-                        shadowElevation = if (isSelected) 2.dp else 0.dp,
-                        modifier = Modifier.clickable { selectedFilterTab = tab }
-                    ) {
-                        Text(
-                            text = tab,
-                            fontSize = 11.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) BtnCreamWhite else TextDark,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-                        )
+        // Filter Tabs (Pill Chips)
+            item {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(filterTabs) { tab ->
+                        val isSelected = tab == selectedFilterTab
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
+                            border = if (!isSelected) BorderStroke(1.dp, BorderStitch) else null,
+                            shadowElevation = if (isSelected) 2.dp else 0.dp,
+                            modifier = Modifier.clickable { selectedFilterTab = tab }
+                        ) {
+                            Text(
+                                text = tab,
+                                fontSize = 11.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) BtnCreamWhite else TextDark,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                            )
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
             // Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = { Text("Cari ID Transaksi...", fontSize = 12.sp, color = TextMuted) },
-                singleLine = true,
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search",
-                        tint = TextMuted,
-                        modifier = Modifier.size(18.dp)
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted, modifier = Modifier.size(16.dp))
+            item {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Cari ID, nama siswa, NISN, QR, menu...", fontSize = 12.sp, color = TextMuted) },
+                    singleLine = true,
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = TextMuted,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted, modifier = Modifier.size(16.dp))
+                            }
                         }
-                    }
-                },
-                shape = RoundedCornerShape(12.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = TextDark,
-                    unfocusedTextColor = TextDark,
-                    focusedContainerColor = CardCreamWhite,
-                    unfocusedContainerColor = CardCreamWhite,
-                    focusedBorderColor = BtnDarkChocolate,
-                    unfocusedBorderColor = BorderStitch,
-                    cursorColor = BtnDarkChocolate
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
+                    },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = TextDark,
+                        unfocusedTextColor = TextDark,
+                        focusedContainerColor = CardCreamWhite,
+                        unfocusedContainerColor = CardCreamWhite,
+                        focusedBorderColor = BtnDarkChocolate,
+                        unfocusedBorderColor = BorderStitch,
+                        cursorColor = BtnDarkChocolate
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
 
             // Daftar Riwayat Transaksi
             if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = BtnDarkChocolate, modifier = Modifier.size(32.dp))
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = BtnDarkChocolate, modifier = Modifier.size(32.dp))
+                    }
                 }
             } else if (filteredList.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Belum ada riwayat transaksi.", color = TextMuted, fontSize = 13.sp)
+                item {
+                    Box(modifier = Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
+                        Text("Belum ada riwayat transaksi.", color = TextMuted, fontSize = 13.sp)
+                    }
                 }
             } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 24.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    groupedOrders.forEach { (headerTitle, ordersInGroup) ->
+                groupedOrders.forEach { (headerTitle, ordersInGroup) ->
                         item {
                             Surface(
                                 color = SegmentBg,
@@ -661,14 +700,15 @@ fun RiwayatScreen(
 
                         items(ordersInGroup, key = { it.id ?: "" }) { order ->
                             val shortId = order.id?.take(8)?.uppercase() ?: "-"
-                            val isCompleted = (order.status ?: "").equals("COMPLETED", ignoreCase = true) ||
-                                    (order.status ?: "").equals("SUKSES", ignoreCase = true)
+                            val isCompleted = order.isCompleted
+                            val isCancelled = order.isCancelled
+                            val isPreOrder = order.orderType.equals("PRE-ORDER", ignoreCase = true) || !order.qrCode.isNullOrBlank()
 
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { viewModel.selectOrderForDetail(order) },
-                                shape = RoundedCornerShape(12.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
                                 border = BorderStroke(1.dp, BorderStitch),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -676,8 +716,9 @@ fun RiwayatScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                                        .padding(14.dp)
                                 ) {
+                                    // Header Baris: Tag Jenis Pesanan + ID & Status
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -689,85 +730,148 @@ fun RiwayatScreen(
                                         ) {
                                             Surface(
                                                 shape = RoundedCornerShape(6.dp),
-                                                color = BgWarmTan.copy(alpha = 0.35f)
+                                                color = if (isPreOrder) BtnMocha else BgDarkEspresso
                                             ) {
-                                                Text(
-                                                    text = "#$shortId",
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Bold,
-                                                    color = BtnDarkChocolate,
-                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
-                                                )
+                                                Row(
+                                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Icon(
+                                                        imageVector = if (isPreOrder) Icons.Default.QrCode else Icons.Default.ShoppingBag,
+                                                        contentDescription = null,
+                                                        tint = if (isPreOrder) BtnCreamWhite else BgWarmTan,
+                                                        modifier = Modifier.size(11.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    Text(
+                                                        text = if (isPreOrder) "PRE-ORDER QR" else "KASIR TUNAI",
+                                                        fontSize = 9.sp,
+                                                        fontWeight = FontWeight.Bold,
+                                                        color = if (isPreOrder) BtnCreamWhite else BgWarmTan
+                                                    )
+                                                }
                                             }
 
                                             Text(
-                                                text = formatOrderDate(order.displayCreatedAt),
+                                                text = "#$shortId",
                                                 fontSize = 11.sp,
-                                                color = TextMuted
+                                                fontWeight = FontWeight.Bold,
+                                                color = BtnDarkChocolate
                                             )
                                         }
 
+                                        // Status Badge
                                         Surface(
                                             shape = RoundedCornerShape(6.dp),
-                                            color = if (isCompleted) GreenSuccessContainer else BgWarmTan.copy(alpha = 0.3f)
+                                            color = when {
+                                                isCompleted -> GreenSuccessContainer
+                                                isCancelled -> Color(0xFFF1F1F1)
+                                                else -> Color(0xFFFEE6D8)
+                                            }
                                         ) {
                                             Text(
-                                                text = if (isCompleted) "SUKSES" else (order.status ?: "SELESAI").uppercase(),
+                                                text = when {
+                                                    isCompleted -> "SUKSES"
+                                                    isCancelled -> "DIBATALKAN"
+                                                    else -> "MENUNGGU DIAMBIL"
+                                                },
                                                 fontSize = 9.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                color = if (isCompleted) GreenSuccess else BtnDarkChocolate,
-                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                                color = when {
+                                                    isCompleted -> GreenSuccess
+                                                    isCancelled -> TextMuted
+                                                    else -> Color(0xFFC25E00)
+                                                },
+                                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
                                             )
                                         }
                                     }
 
-                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Spacer(modifier = Modifier.height(8.dp))
 
-                                    if (!order.displayCustomerName.isNullOrBlank() || order.orderType.equals("PRE-ORDER", ignoreCase = true)) {
+                                    // Baris Info Pelanggan / Siswa
+                                    if (!order.displayCustomerName.isNullOrBlank() || isPreOrder) {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
                                             verticalAlignment = Alignment.CenterVertically
                                         ) {
-                                            Text(
-                                                text = "👤 ${order.displayCustomerName ?: "Siswa"} (${order.displayCustomerClass ?: "Siswa"})",
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = BtnDarkChocolate
-                                            )
-                                            if (order.isPending) {
-                                                Surface(
-                                                    shape = RoundedCornerShape(4.dp),
-                                                    color = Color(0xFFFEE6D8)
-                                                ) {
-                                                    Text(
-                                                        text = "MENUNGGU DIAMBIL",
-                                                        fontSize = 9.sp,
-                                                        fontWeight = FontWeight.ExtraBold,
-                                                        color = Color(0xFFC25E00),
-                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                                    )
-                                                }
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                modifier = Modifier.weight(1f, fill = false)
+                                            ) {
+                                                Icon(
+                                                    imageVector = Icons.Default.Person,
+                                                    contentDescription = null,
+                                                    tint = BtnMocha,
+                                                    modifier = Modifier.size(14.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Text(
+                                                    text = "${order.displayCustomerName ?: "Siswa"} • ${order.displayCustomerClass ?: "-"}",
+                                                    fontSize = 12.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = TextDark,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis
+                                                )
+                                            }
+                                            if (!order.customerNisn.isNullOrBlank()) {
+                                                Text(
+                                                    text = "NISN: ${order.customerNisn}",
+                                                    fontSize = 10.sp,
+                                                    color = TextMuted
+                                                )
                                             }
                                         }
                                         Spacer(modifier = Modifier.height(4.dp))
                                     }
 
+                                    // Baris Preview Item
+                                    val itemsSummary = order.displayItems.let { items ->
+                                        if (items.isNotEmpty()) {
+                                            items.joinToString(", ") { "${it.displayProductName} (${it.quantity ?: 1}x)" }
+                                        } else {
+                                            "Menu kantin PKK"
+                                        }
+                                    }
+                                    Text(
+                                        text = "📦 $itemsSummary",
+                                        fontSize = 11.sp,
+                                        color = TextMuted,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    HorizontalDivider(color = BorderStitch.copy(alpha = 0.6f))
+                                    Spacer(modifier = Modifier.height(8.dp))
+
+                                    // Baris Tanggal & Nominal
                                     Row(
                                         modifier = Modifier.fillMaxWidth(),
                                         horizontalArrangement = Arrangement.SpaceBetween,
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text(
-                                            text = "Klik rincian nota",
-                                            fontSize = 11.sp,
-                                            color = BtnMocha,
-                                            fontWeight = FontWeight.SemiBold
-                                        )
+                                        Column {
+                                            Text(
+                                                text = formatOrderDate(order.completedAt ?: order.displayCreatedAt),
+                                                fontSize = 10.sp,
+                                                color = TextMuted
+                                            )
+                                            if (!order.kasirName.isNullOrBlank()) {
+                                                Text(
+                                                    text = "Kasir: ${order.kasirName}",
+                                                    fontSize = 10.sp,
+                                                    color = BtnMocha,
+                                                    fontWeight = FontWeight.SemiBold
+                                                )
+                                            }
+                                        }
 
                                         Text(
                                             text = (order.totalAmount ?: 0.0).toRupiahFormat(),
-                                            fontSize = 14.sp,
+                                            fontSize = 15.sp,
                                             fontWeight = FontWeight.ExtraBold,
                                             color = BtnDarkChocolate
                                         )
@@ -779,7 +883,6 @@ fun RiwayatScreen(
                 }
             }
         }
-    }
 
     // Modal Dialog Detail Transaksi (Stitch Receipt Style)
     selectedDetail?.let { order ->
@@ -812,7 +915,13 @@ fun RiwayatScreen(
                 }
             },
             text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    val isPreOrder = order.orderType.equals("PRE-ORDER", ignoreCase = true) || !order.qrCode.isNullOrBlank()
+
                     Surface(
                         shape = RoundedCornerShape(10.dp),
                         color = SegmentBg,
@@ -820,16 +929,40 @@ fun RiwayatScreen(
                     ) {
                         Column(modifier = Modifier.padding(10.dp)) {
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("No. Order:", fontSize = 11.sp, color = TextMuted)
-                                Text("#${order.id ?: "-"}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                                Text("Tipe Transaksi:", fontSize = 11.sp, color = TextMuted)
+                                Text(
+                                    text = if (isPreOrder) "Pre-Order QR Siswa" else "Kasir POS Tunai",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (isPreOrder) BtnMocha else BtnDarkChocolate
+                                )
                             }
                             Spacer(modifier = Modifier.height(2.dp))
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                Text("Waktu:", fontSize = 11.sp, color = TextMuted)
+                                Text("No. Order:", fontSize = 11.sp, color = TextMuted)
+                                Text("#${order.id ?: "-"}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                            }
+                            if (!order.qrCode.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Kode Voucher QR:", fontSize = 11.sp, color = TextMuted)
+                                    Text(order.qrCode ?: "-", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BtnDarkChocolate)
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("Waktu Pesan:", fontSize = 11.sp, color = TextMuted)
                                 Text(formatOrderDate(order.displayCreatedAt), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                             }
+                            if (!order.completedAt.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(2.dp))
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Waktu Selesai:", fontSize = 11.sp, color = TextMuted)
+                                    Text(formatOrderDate(order.completedAt), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                                }
+                            }
 
-                            if (!order.displayCustomerName.isNullOrBlank() || order.orderType.equals("PRE-ORDER", ignoreCase = true)) {
+                            if (!order.displayCustomerName.isNullOrBlank() || isPreOrder) {
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text("Pemesan (Siswa):", fontSize = 11.sp, color = TextMuted)
@@ -844,10 +977,18 @@ fun RiwayatScreen(
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                     Text("Status Ambil:", fontSize = 11.sp, color = TextMuted)
                                     Text(
-                                        text = if (order.isPending) "Menunggu Diambil" else "Sudah Diambil",
+                                        text = when {
+                                            order.isCompleted -> "✅ Sudah Diambil"
+                                            order.isCancelled -> "⚠️ Dibatalkan"
+                                            else -> "⏳ Menunggu Diambil"
+                                        },
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (order.isPending) Color(0xFFC25E00) else GreenSuccess
+                                        color = when {
+                                            order.isCompleted -> GreenSuccess
+                                            order.isCancelled -> TextMuted
+                                            else -> Color(0xFFC25E00)
+                                        }
                                     )
                                 }
                             }

@@ -23,6 +23,8 @@ Setiap agen yang memodifikasi basis kode ini **WAJIB MEMATUHI ATURAN BERIKUT TAN
 - **Pengecekan Shift Kasir**: Kasir **tidak boleh** diizinkan menyerahkan makanan jika shift belum dibuka (`isShiftOpen == false`).
 - **Validasi Stok Pre-Order**: Pembeli **tidak boleh** dapat memesan produk yang stoknya habis (`stock <= 0`) atau melebihi jumlah stok fisik yang tersedia.
 - **Verifikasi Identitas Fisik**: Layar kasir harus selalu menampilkan **Nama Siswa, Kelas, dan NISN** untuk dicocokkan secara lisan oleh petugas kasir.
+- **Pemindai Kamera & Galeri QR**: Kasir dilengkapi fitur pemindai kamera instan dan pengunggah gambar galeri (`QrCodeUtil.decodeQrFromBitmap`) untuk mempercepat verifikasi tanpa perlu mengetik manual.
+- **Proteksi Celah Finansial Penitip**: Harga jual produk titipan wajib lebih besar dari Rp 1.000 (margin kas PKK) untuk mencegah kerugian atau saldo negatif mitra.
 
 ### 👤 ATURAN 2: Pertahankan Hak Akses Edit Profil Mandiri untuk Semua Peran
 - Setiap user (Pembeli, Kasir, Penitip) memiliki hak untuk mengedit profil mereka sendiri:

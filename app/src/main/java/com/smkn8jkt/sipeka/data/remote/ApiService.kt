@@ -155,6 +155,7 @@ interface ApiService {
         @Part image: MultipartBody.Part?,
         @Part("name") name: RequestBody,
         @Part("price") price: RequestBody,
+        @Part("category") category: RequestBody? = null,
         @Part("description") description: RequestBody,
         @Part("stock") stock: RequestBody,
         @Part("school_margin") schoolMargin: RequestBody

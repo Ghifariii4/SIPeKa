@@ -9,6 +9,8 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,8 +23,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
@@ -56,6 +62,12 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material3.OutlinedButton
+import com.smkn8jkt.sipeka.util.QrCodeUtil
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -137,9 +149,24 @@ fun KasirHomeScreen(
     var selectedNavIndex by remember { mutableIntStateOf(0) }
     var showCheckoutSheet by remember { mutableStateOf(false) }
     var showQrDialog by remember { mutableStateOf(false) }
+    var showLiveScannerPopup by remember { mutableStateOf(false) }
     var qrCodeInput by remember { mutableStateOf("") }
 
-    val categories = remember { listOf("Semua", "Makanan", "Minuman", "Snack") }
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            val decoded = QrCodeUtil.decodeQrFromUri(context, uri)
+            if (!decoded.isNullOrBlank()) {
+                qrCodeInput = decoded.trim()
+                Toast.makeText(context, "✅ QR Berhasil Dipindai dari Galeri!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context, "⚠️ QR Code tidak terdeteksi pada gambar yang dipilih.", Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
+    val categories = remember { listOf("Semua", "Makanan", "Minuman", "Snack", "Paket") }
 
     LaunchedEffect(Unit) {
         viewModel.fetchProducts()
@@ -159,6 +186,7 @@ fun KasirHomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .background(BgLightCanvas)
+                .safeDrawingPadding()
                 .padding(24.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -238,10 +266,14 @@ fun KasirHomeScreen(
     // KONDISI 2: SHIFT AKTIF (KATALOG & TRANSAKSI)
     val filteredProducts = remember(products, searchQuery, selectedCategory) {
         products.filter { product ->
-            val matchesCategory = selectedCategory == "Semua" ||
-                    (product.category ?: "").equals(selectedCategory, ignoreCase = true)
+            val effectiveCat = product.effectiveCategory
+            val matchesCategory = selectedCategory.equals("Semua", ignoreCase = true) ||
+                    selectedCategory.equals("Semua Menu", ignoreCase = true) ||
+                    effectiveCat.equals(selectedCategory, ignoreCase = true)
             val matchesSearch = searchQuery.isEmpty() ||
-                    (product.name ?: "").contains(searchQuery, ignoreCase = true)
+                    (product.name ?: "").contains(searchQuery, ignoreCase = true) ||
+                    (product.description ?: "").contains(searchQuery, ignoreCase = true) ||
+                    effectiveCat.contains(searchQuery, ignoreCase = true)
             matchesCategory && matchesSearch
         }
     }
@@ -258,6 +290,7 @@ fun KasirHomeScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .statusBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -463,8 +496,7 @@ fun KasirHomeScreen(
                 // Bottom Tab Navigation Bar (Persistent Stitch Style)
                 NavigationBar(
                     containerColor = CardCreamWhite,
-                    tonalElevation = 8.dp,
-                    modifier = Modifier.height(64.dp)
+                    tonalElevation = 8.dp
                 ) {
                     NavigationBarItem(
                         selected = selectedNavIndex == 0,
@@ -517,91 +549,99 @@ fun KasirHomeScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 12.dp,
+                bottom = 24.dp
+            ),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(12.dp))
-
             // 1. Mode Transaksi Toggle Segmented Control (Stitch POS Style)
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = SegmentBg,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.padding(3.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+            item(span = { GridItemSpan(2) }) {
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = SegmentBg,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    // Button Mode POS
-                    Surface(
-                        shape = RoundedCornerShape(9.dp),
-                        color = BtnDarkChocolate,
-                        shadowElevation = 1.dp,
-                        modifier = Modifier.weight(1f)
+                    Row(
+                        modifier = Modifier.padding(3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        Row(
-                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                        // Button Mode POS
+                        Surface(
+                            shape = RoundedCornerShape(9.dp),
+                            color = BtnDarkChocolate,
+                            shadowElevation = 1.dp,
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(GreenSuccess)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Transaksi POS",
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = BtnCreamWhite
-                            )
+                            Row(
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(GreenSuccess)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Transaksi POS",
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BtnCreamWhite
+                                )
+                            }
                         }
-                    }
 
-                    // Button Mode Scan QR PO
-                    Surface(
-                        shape = RoundedCornerShape(9.dp),
-                        color = if (pendingPreOrders.isNotEmpty()) Color(0xFFFEE6D8) else Color.Transparent,
-                        modifier = Modifier
-                            .weight(1f)
-                            .clickable { showQrDialog = true }
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.Center,
-                            verticalAlignment = Alignment.CenterVertically
+                        // Button Mode Scan QR PO
+                        Surface(
+                            shape = RoundedCornerShape(9.dp),
+                            color = if (pendingPreOrders.isNotEmpty()) Color(0xFFFEE6D8) else Color.Transparent,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { showQrDialog = true }
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.QrCodeScanner,
-                                contentDescription = "Scan QR",
-                                tint = if (pendingPreOrders.isNotEmpty()) Color(0xFFC25E00) else TextMuted,
-                                modifier = Modifier.size(15.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Scan QR Pre-Order",
-                                fontSize = 11.sp,
-                                fontWeight = if (pendingPreOrders.isNotEmpty()) FontWeight.Bold else FontWeight.SemiBold,
-                                color = if (pendingPreOrders.isNotEmpty()) Color(0xFFC25E00) else TextMuted
-                            )
-                            if (pendingPreOrders.isNotEmpty()) {
+                            Row(
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCodeScanner,
+                                    contentDescription = "Scan QR",
+                                    tint = if (pendingPreOrders.isNotEmpty()) Color(0xFFC25E00) else TextMuted,
+                                    modifier = Modifier.size(15.dp)
+                                )
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Surface(
-                                    shape = CircleShape,
-                                    color = Color(0xFFF95721)
-                                ) {
-                                    Text(
-                                        text = "${pendingPreOrders.size}",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Black,
-                                        color = Color.White,
-                                        modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                                    )
+                                Text(
+                                    text = "Scan QR Pre-Order",
+                                    fontSize = 11.sp,
+                                    fontWeight = if (pendingPreOrders.isNotEmpty()) FontWeight.Bold else FontWeight.SemiBold,
+                                    color = if (pendingPreOrders.isNotEmpty()) Color(0xFFC25E00) else TextMuted
+                                )
+                                if (pendingPreOrders.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = Color(0xFFF95721)
+                                    ) {
+                                        Text(
+                                            text = "${pendingPreOrders.size}",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = Color.White,
+                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -611,313 +651,331 @@ fun KasirHomeScreen(
 
             // Banner Notifikasi Pre-Order Siswa Menunggu Diambil
             if (pendingPreOrders.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(10.dp))
+                item(span = { GridItemSpan(2) }) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = Color(0xFFFFF3ED),
+                        border = BorderStroke(1.dp, Color(0xFFFFD8C2)),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showQrDialog = true }
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0xFFF95721),
+                                    modifier = Modifier.size(28.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.Fastfood,
+                                            contentDescription = null,
+                                            tint = Color.White,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "${pendingPreOrders.size} Pesanan Siswa Menunggu Diambil",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF451A0D)
+                                    )
+                                    Text(
+                                        text = "Klik untuk verifikasi & serahkan makanan",
+                                        fontSize = 11.sp,
+                                        color = Color(0xFF8C5338)
+                                    )
+                                }
+                            }
+
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = Color(0xFFF95721)
+                            ) {
+                                Text(
+                                    text = "Buka",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Search Bar + Quick Barcode Scanner Button
+            item(span = { GridItemSpan(2) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { viewModel.updateSearchQuery(it) },
+                        placeholder = {
+                            Text(
+                                text = "Cari produk titipan atau barcode...",
+                                fontSize = 12.sp,
+                                color = TextMuted
+                            )
+                        },
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Cari",
+                                tint = TextMuted,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchQuery.isNotEmpty()) {
+                                IconButton(onClick = { viewModel.updateSearchQuery("") }) {
+                                    Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted, modifier = Modifier.size(16.dp))
+                                }
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = TextDark,
+                            unfocusedTextColor = TextDark,
+                            focusedContainerColor = CardCreamWhite,
+                            unfocusedContainerColor = CardCreamWhite,
+                            focusedBorderColor = BtnDarkChocolate,
+                            unfocusedBorderColor = BorderStitch,
+                            cursorColor = BtnDarkChocolate
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    // Quick Barcode Action Button
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = CardCreamWhite,
+                        border = BorderStroke(1.dp, BorderStitch),
+                        shadowElevation = 1.dp,
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clickable { showLiveScannerPopup = true }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Icon(
+                                imageVector = Icons.Default.QrCodeScanner,
+                                contentDescription = "Scan",
+                                tint = BtnDarkChocolate,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // 3. Category Pill Chips Filter (Stitch Style)
+            item(span = { GridItemSpan(2) }) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(categories) { category ->
+                        val isSelected = category == selectedCategory
+                        Surface(
+                            shape = RoundedCornerShape(20.dp),
+                            color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
+                            border = if (!isSelected) BorderStroke(1.dp, BorderStitch) else null,
+                            shadowElevation = if (isSelected) 2.dp else 0.dp,
+                            modifier = Modifier.clickable { viewModel.updateSelectedCategory(category) }
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            ) {
+                                Text(
+                                    text = category,
+                                    fontSize = 11.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) BtnCreamWhite else TextDark
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 4. Strip Margin Kas PKK (Stitch Specification)
+            item(span = { GridItemSpan(2) }) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = Color(0xFFFFF3ED),
-                    border = BorderStroke(1.dp, Color(0xFFFFD8C2)),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { showQrDialog = true }
+                    color = BannerMarginBg,
+                    border = BorderStroke(1.dp, BannerMarginBorder),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.weight(1f)
                         ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = Color(0xFFF95721),
-                                modifier = Modifier.size(28.dp)
+                            Box(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(CardCreamWhite),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Fastfood,
-                                        contentDescription = null,
-                                        tint = Color.White,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                }
-                            }
-                            Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Text(
-                                    text = "${pendingPreOrders.size} Pesanan Siswa Menunggu Diambil",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF451A0D)
-                                )
-                                Text(
-                                    text = "Klik untuk verifikasi & serahkan makanan",
-                                    fontSize = 11.sp,
-                                    color = Color(0xFF8C5338)
+                                Icon(
+                                    imageVector = Icons.Default.MonetizationOn,
+                                    contentDescription = "Margin",
+                                    tint = BtnDarkChocolate,
+                                    modifier = Modifier.size(15.dp)
                                 )
                             }
+
+                            Text(
+                                text = "Margin Kas PKK: Otomatis Rp 1.000/item ke sekolah",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = TextDark
+                            )
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color(0xFFF95721)
+                            shape = RoundedCornerShape(6.dp),
+                            color = CardCreamWhite.copy(alpha = 0.8f)
                         ) {
                             Text(
-                                text = "Buka",
-                                fontSize = 11.sp,
+                                text = "100% Amanah",
+                                fontSize = 9.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                color = BtnDarkChocolate,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 2. Search Bar + Quick Barcode Scanner Button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { viewModel.updateSearchQuery(it) },
-                    placeholder = {
-                        Text(
-                            text = "Cari produk titipan atau barcode...",
-                            fontSize = 12.sp,
-                            color = TextMuted
-                        )
-                    },
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Cari",
-                            tint = TextMuted,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { viewModel.updateSearchQuery("") }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted, modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextDark,
-                        unfocusedTextColor = TextDark,
-                        focusedContainerColor = CardCreamWhite,
-                        unfocusedContainerColor = CardCreamWhite,
-                        focusedBorderColor = BtnDarkChocolate,
-                        unfocusedBorderColor = BorderStitch,
-                        cursorColor = BtnDarkChocolate
-                    ),
-                    modifier = Modifier.weight(1f)
-                )
-
-                // Quick Barcode Action Button
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = CardCreamWhite,
-                    border = BorderStroke(1.dp, BorderStitch),
-                    shadowElevation = 1.dp,
-                    modifier = Modifier
-                        .size(46.dp)
-                        .clickable { showQrDialog = true }
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
-                            contentDescription = "Scan",
-                            tint = BtnDarkChocolate,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 3. Category Pill Chips Filter (Stitch Style)
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(categories) { category ->
-                    val isSelected = category == selectedCategory
-                    Surface(
-                        shape = RoundedCornerShape(20.dp),
-                        color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
-                        border = if (!isSelected) BorderStroke(1.dp, BorderStitch) else null,
-                        shadowElevation = if (isSelected) 2.dp else 0.dp,
-                        modifier = Modifier.clickable { viewModel.updateSelectedCategory(category) }
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = category,
-                                fontSize = 11.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) BtnCreamWhite else TextDark
-                            )
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // 4. Strip Margin Kas PKK (Stitch Specification)
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = BannerMarginBg,
-                border = BorderStroke(1.dp, BannerMarginBorder),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            // 5. Catalog Section Header
+            item(span = { GridItemSpan(2) }) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .clip(RoundedCornerShape(6.dp))
-                                .background(CardCreamWhite),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MonetizationOn,
-                                contentDescription = "Margin",
-                                tint = BtnDarkChocolate,
-                                modifier = Modifier.size(15.dp)
-                            )
-                        }
-
+                    Column {
                         Text(
-                            text = "Margin Kas PKK: Otomatis Rp 1.000/item ke sekolah",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
+                            text = "Etalase Titipan Siswa",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
                             color = TextDark
+                        )
+                        Text(
+                            text = "Stok sinkron live otomatis",
+                            fontSize = 11.sp,
+                            color = TextMuted
                         )
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = CardCreamWhite.copy(alpha = 0.8f)
+                        shape = RoundedCornerShape(8.dp),
+                        color = SegmentBg
                     ) {
-                        Text(
-                            text = "100% Amanah",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BtnDarkChocolate,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(GreenSuccess)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Text(
+                                text = "${filteredProducts.size} Siap Saji",
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = BtnDarkChocolate
+                            )
+                        }
                     }
                 }
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 5. Catalog Section Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "Etalase Titipan Siswa",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextDark
-                    )
-                    Text(
-                        text = "Stok sinkron live otomatis",
-                        fontSize = 11.sp,
-                        color = TextMuted
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = SegmentBg
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(GreenSuccess)
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Text(
-                            text = "${filteredProducts.size} Siap Saji",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = BtnDarkChocolate
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
 
             // 6. Grid Produk 2-Kolom Sesuai Stitch Mockup
             if (isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Memuat data menu titipan...", color = TextMuted, fontSize = 13.sp)
+                item(span = { GridItemSpan(2) }) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Memuat data menu titipan...", color = TextMuted, fontSize = 13.sp)
+                    }
                 }
             } else if (filteredProducts.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Menu tidak ditemukan", color = TextMuted, fontSize = 13.sp)
+                item(span = { GridItemSpan(2) }) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                            .padding(32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Menu tidak ditemukan", color = TextMuted, fontSize = 13.sp)
+                    }
                 }
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(bottom = 90.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(filteredProducts, key = { it.id }) { product ->
-                        val inCartQty = cartItems.find { it.product.id == product.id }?.quantity ?: 0
-                        SipekaProductCard(
-                            product = product,
-                            cartQuantity = inCartQty,
-                            onAddToCart = { viewModel.addToCart(it) },
-                            onRemoveFromCart = { viewModel.decreaseQuantity(it.id) }
-                        )
-                    }
+                items(filteredProducts, key = { it.id }) { product ->
+                    val inCartQty = cartItems.find { it.product.id == product.id }?.quantity ?: 0
+                    SipekaProductCard(
+                        product = product,
+                        cartQuantity = inCartQty,
+                        onAddToCart = { viewModel.addToCart(it) },
+                        onRemoveFromCart = { viewModel.decreaseQuantity(it.id) }
+                    )
                 }
             }
         }
+    }
+
+    // POPUP PEMINDAI QR OTOMATIS (IN-APP LIVE CAMERA SCANNER)
+    if (showLiveScannerPopup) {
+        LiveQrScannerPopup(
+            onDismissRequest = { showLiveScannerPopup = false },
+            onQrDetected = { scannedCode ->
+                showLiveScannerPopup = false
+                qrCodeInput = scannedCode.trim()
+                showQrDialog = true
+                Toast.makeText(context, "✅ QR Berhasil Terbaca: $scannedCode", Toast.LENGTH_SHORT).show()
+            },
+            onOpenManualInput = {
+                showLiveScannerPopup = false
+                showQrDialog = true
+            }
+        )
     }
 
     // Modal Verifikasi & Antrean Pre-Order Siswa (Anti-Fraud / Anti-Jahil)
@@ -928,7 +986,9 @@ fun KasirHomeScreen(
             else preOrders.find {
                 (it.id != null && it.id.equals(q, ignoreCase = true)) ||
                 (it.qrCode != null && it.qrCode.equals(q, ignoreCase = true)) ||
-                (it.id?.take(8)?.equals(q, ignoreCase = true) == true)
+                (it.id?.take(8)?.equals(q, ignoreCase = true) == true) ||
+                (it.id != null && q.contains(it.id.take(8), ignoreCase = true)) ||
+                (it.qrCode != null && q.contains(it.qrCode, ignoreCase = true))
             }
         }
 
@@ -979,14 +1039,54 @@ fun KasirHomeScreen(
                 }
             },
             text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
                     Text(
-                        text = "Scan QR voucher atau cari kode order untuk verifikasi pengambilan:",
+                        text = "Scan QR voucher dari HP siswa atau masukkan kode order untuk verifikasi:",
                         fontSize = 12.sp,
                         color = TextMuted
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // TOMBOL AKSI CEPAT: SCANNER OTOMATIS & GALERI
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                showQrDialog = false
+                                showLiveScannerPopup = true
+                            },
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Scan Otomatis", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                        }
+
+                        OutlinedButton(
+                            onClick = { galleryLauncher.launch("image/*") },
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, BorderStitch),
+                            colors = ButtonDefaults.outlinedButtonColors(containerColor = CardCreamWhite),
+                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.PhotoLibrary, contentDescription = null, tint = BtnDarkChocolate, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Pilih Gambar", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = BtnDarkChocolate)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     SipekaTextField(
                         value = qrCodeInput,
@@ -1019,13 +1119,25 @@ fun KasirHomeScreen(
 
                                     Surface(
                                         shape = RoundedCornerShape(6.dp),
-                                        color = if (matchedOrder.isCompleted) Color(0xFFFFEAEA) else GreenSuccessContainer
+                                        color = when {
+                                            matchedOrder.isCancelled -> Color(0xFFF3F4F6)
+                                            matchedOrder.isCompleted -> Color(0xFFFFEAEA)
+                                            else -> GreenSuccessContainer
+                                        }
                                     ) {
                                         Text(
-                                            text = if (matchedOrder.isCompleted) "SUDAH PERNAH DIAMBIL" else "MENUNGGU DIAMBIL",
+                                            text = when {
+                                                matchedOrder.isCancelled -> "DIBATALKAN"
+                                                matchedOrder.isCompleted -> "SUDAH PERNAH DIAMBIL"
+                                                else -> "MENUNGGU DIAMBIL"
+                                            },
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (matchedOrder.isCompleted) Color(0xFFDC2626) else GreenSuccess,
+                                            color = when {
+                                                matchedOrder.isCancelled -> Color(0xFF4B5563)
+                                                matchedOrder.isCompleted -> Color(0xFFDC2626)
+                                                else -> GreenSuccess
+                                            },
                                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                         )
                                     }
@@ -1107,6 +1219,29 @@ fun KasirHomeScreen(
                                             color = Color(0xFFDC2626)
                                         )
                                     }
+                                } else if (matchedOrder.isCancelled) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(Color(0xFFF3F4F6), RoundedCornerShape(6.dp))
+                                            .padding(8.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = Color(0xFF6B7280),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(
+                                            text = "ℹ️ Pesanan ini telah DIBATALKAN oleh pemesan.",
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF4B5563)
+                                        )
+                                    }
                                 } else {
                                     Spacer(modifier = Modifier.height(10.dp))
                                     Button(
@@ -1159,13 +1294,11 @@ fun KasirHomeScreen(
                             )
                         }
                     } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(220.dp),
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            items(pendingPreOrders, key = { it.id ?: "" }) { order ->
+                            pendingPreOrders.forEach { order ->
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
                                     shape = RoundedCornerShape(10.dp),

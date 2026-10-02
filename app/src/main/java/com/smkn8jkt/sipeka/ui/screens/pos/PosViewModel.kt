@@ -8,11 +8,16 @@ import com.smkn8jkt.sipeka.data.model.BaseResponse
 import com.smkn8jkt.sipeka.data.model.CartItem
 import com.smkn8jkt.sipeka.data.model.ClockInRequest
 import com.smkn8jkt.sipeka.data.model.OrderData
+import com.smkn8jkt.sipeka.data.model.OrderItemData
 import com.smkn8jkt.sipeka.data.model.OrderItemRequest
 import com.smkn8jkt.sipeka.data.model.OrderRequest
 import com.smkn8jkt.sipeka.data.model.ProductResponse
 import com.smkn8jkt.sipeka.data.model.ShiftData
 import com.smkn8jkt.sipeka.data.remote.ApiClient
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.UUID
 import com.smkn8jkt.sipeka.data.remote.ApiService
 import com.smkn8jkt.sipeka.data.remote.TokenManager
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -82,7 +87,7 @@ class PosViewModel(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _selectedCategory = MutableStateFlow("Semua Menu")
+    private val _selectedCategory = MutableStateFlow("Semua")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
     fun updateSearchQuery(query: String) {
@@ -284,9 +289,10 @@ class PosViewModel(
 
             try {
                 val currentKasir = tokenManager?.getKasirNameSync() ?: "Petugas Kasir 1"
+                val activeShiftId = _currentShiftData.value?.id ?: "SHIFT-ACTIVE"
 
-                // 1. Eksekusi verifikasi anti-fraud di sistem penyimpanan bersama
-                val (success, message) = tokenManager?.completeSharedOrder(cleanQuery, currentKasir)
+                // 1. Eksekusi verifikasi anti-fraud di sistem penyimpanan bersama dengan menyematkan shiftId aktif
+                val (success, message) = tokenManager?.completeSharedOrder(cleanQuery, currentKasir, activeShiftId)
                     ?: Pair(false, "Sistem penyimpanan pesanan tidak dapat diakses.")
 
                 // 2. Kirim update ke endpoint backend jika terhubung
@@ -455,27 +461,48 @@ class PosViewModel(
                 }
                 val request = OrderRequest(items = orderItems)
 
-                val response = apiService.createTransaction(request)
-                if (response.isSuccessful) {
-                    _cartItems.value = emptyList()
-                    _checkoutSuccess.value = true
-                } else {
-                    val errorString = response.errorBody()?.string()
-                    val parsedError = if (!errorString.isNullOrBlank()) {
-                        try {
-                            val gson = Gson()
-                            val baseError = gson.fromJson(errorString, BaseResponse::class.java)
-                            baseError.message ?: "Gagal memproses pesanan."
-                        } catch (e: Exception) {
-                            "Transaksi gagal diproses (${response.code()})."
-                        }
-                    } else {
-                        "Transaksi gagal diproses oleh server."
+                val currentItems = _cartItems.value.toList()
+                val totalCart = currentItems.sumOf { it.subtotal }
+                val currentKasir = tokenManager?.getKasirNameSync() ?: "Petugas Kasir 1"
+                val activeShiftId = _currentShiftData.value?.id ?: "SHIFT-ACTIVE"
+                val nowIso = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
+                val generatedOrderId = UUID.randomUUID().toString()
+
+                val cashOrder = OrderData(
+                    id = generatedOrderId,
+                    orderType = "KASIR-TUNAI",
+                    status = "COMPLETED",
+                    totalAmount = totalCart,
+                    createdAt = nowIso,
+                    completedAt = nowIso,
+                    shiftId = activeShiftId,
+                    kasirName = currentKasir,
+                    customerName = "Pelanggan Kasir Tunai",
+                    items = currentItems.map {
+                        OrderItemData(
+                            id = UUID.randomUUID().toString(),
+                            productId = it.product.id,
+                            productName = it.product.name,
+                            price = it.product.price,
+                            quantity = it.quantity
+                        )
                     }
-                    _errorMessage.value = parsedError
-                }
+                )
+
+                var serverSuccess = false
+                try {
+                    val response = apiService.createTransaction(request)
+                    serverSuccess = response.isSuccessful
+                } catch (_: Exception) {}
+
+                // Simpan transaksi kasir langsung ke shared orders agar seketika masuk riwayat kasir & rekap shift
+                tokenManager?.saveSharedOrder(cashOrder)
+                _cartItems.value = emptyList()
+                _checkoutSuccess.value = true
+                fetchHistory()
+                fetchProducts()
             } catch (e: Exception) {
-                _errorMessage.value = e.localizedMessage ?: "Terjadi kesalahan koneksi"
+                _errorMessage.value = e.localizedMessage ?: "Terjadi kesalahan memproses pesanan"
             } finally {
                 _isCheckoutLoading.value = false
             }

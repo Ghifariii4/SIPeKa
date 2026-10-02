@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -146,7 +147,8 @@ fun RegisterScreenContent(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgLightCanvas),
+            .background(BgLightCanvas)
+            .safeDrawingPadding(),
         contentAlignment = Alignment.Center
     ) {
         Column(

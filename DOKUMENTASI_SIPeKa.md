@@ -119,6 +119,10 @@ d:/AndroidStudioProjects/SIPeKa/
 - **Riwayat Pesanan Terisolasi (Anti-Intip Privasi)**:
   - Tab Pesanan Saya hanya menampilkan transaksi milik akun siswa yang sedang login.
   - Tiket QR yang sudah selesai/diambil diberi penanda hijau `SELESAI / DIAMBIL`.
+- **Pembatalan Pesanan Mandiri**:
+  - Siswa dapat membatalkan pesanan pre-order secara mandiri selama status masih `PENDING` jika terjadi kekeliruan pesanan sebelum kasir menyiapkan makanan.
+- **Bukti Fisik Resmi Serah-Terima**:
+  - Saat pesanan selesai diserahkan, tiket menampilkan stempel resmi nama petugas kasir yang melayani dan waktu serah-terima (`completedAt`).
 - **Edit Profil Akun Mandiri**:
   - Siswa dapat mengubah Nama Lengkap, Kelas, NISN, dan Password akun secara mandiri.
 
@@ -134,8 +138,12 @@ d:/AndroidStudioProjects/SIPeKa/
 - **Antrean Pre-Order Siswa Masuk Real-Time**:
   - Badge angka oranye dan banner notifikasi muncul seketika di layar Beranda Kasir jika ada pesanan siswa yang belum diambil.
   - Kasir dapat menekan tombol antrean untuk melihat daftar siswa yang menunggu.
+- **Pemindai Kamera QR & Galeri Cerdas (Camera QR Scanner)**:
+  - **Tombol "Buka Kamera"**: Kasir dapat membuka kamera perangkat secara langsung untuk mengambil foto tiket QR siswa di depan konter.
+  - **Tombol "Pilih Gambar"**: Kasir dapat mengimpor file foto / screenshot kode QR dari galeri perangkat.
+  - **Multi-Binarizer Decoding ZXing**: Menggunakan algoritma *HybridBinarizer* dan *GlobalHistogramBinarizer* sehingga mampu mendeteksi QR Code dari layar HP siswa meski dalam kondisi silau, redup, atau foto agak miring.
 - **Modal Verifikasi Pre-Order & Anti-Fraud**:
-  - Kasir dapat mencari pesanan lewat scan/ketik kode QR ataupun memilih dari daftar antrean siswa.
+  - Kasir dapat mencari pesanan lewat scan kamera, galeri, ketik kode QR, ataupun langsung memilih dari daftar antrean siswa.
   - Menampilkan identitas lengkap pemesan (**Nama Siswa, Kelas, NISN**) agar kasir dapat mencocokkan secara lisan saat siswa datang ke meja kasir.
   - Tombol aksi `Verifikasi & Serahkan Makanan` langsung mengunci status pesanan menjadi `COMPLETED`.
   - **Proteksi Pengambilan Ganda (Anti-Jahil #2)**: Jika ada pihak yang mencoba mengklaim kembali tiket QR yang sudah diserahkan, sistem menampilkan peringatan keamanan keras:
@@ -148,8 +156,9 @@ d:/AndroidStudioProjects/SIPeKa/
 ### 3. 🍱 Penitip (Mitra Dagangan Siswa / Guru)
 - **Monitoring Penjualan Real-Time**:
   - Menampilkan ringkasan sisa stok makanan, jumlah item terjual, dan harga jual per porsi.
-- **Kalkulasi Bagi Hasil Otomatis**:
+- **Kalkulasi Bagi Hasil Otomatis & Proteksi Finansial (Anti-Celah)**:
   - Rumus bagi hasil: `(Harga Jual - Rp 1.000 Kas PKK) × Jumlah Terjual`.
+  - **Validasi Minimum Harga**: Penitip wajib menetapkan harga di atas Rp 1.000 (biaya operasional kas sekolah), mencegah risiko pendapatan minus atau saldo nol.
   - Kartu pendapatan belum dicairkan (*unpaid earnings*) dengan visual gradien espresso.
 - **Manajemen Produk Titipan**:
   - Form penambahan produk dengan unggah foto, harga jual, deskripsi, dan stok awal.
@@ -349,6 +358,19 @@ git push origin master
 
 ---
 
+## 🧾 11.1 Integrasi Riwayat Transaksi & Rekap Shift Kasir
+- **Shift Binding Otomatis**: Setiap kali pesanan pre-order siswa diserahkan melalui scan QR atau pencarian kode order, sistem menyematkan `shiftId = activeShiftId`, `completedAt = nowIso`, dan `kasirName = namaKasir`. Hal ini memastikan pesanan langsung tampil di tab **"Shift Aktif"** dan tidak hilang dari laporan penutupan shift kasir.
+- **Kategori Filter Tab**:
+  1. `Shift Aktif`: Menampilkan seluruh transaksi (QR maupun tunai) yang diproses pada sesi shift kasir yang sedang berjalan.
+  2. `Pre-Order QR`: Menampilkan riwayat voucher pesanan siswa sekolah (QR Code).
+  3. `Kasir Tunai`: Menampilkan transaksi belanja langsung di tempat (*dine-in/takeaway cash*).
+  4. `Hari Ini`: Menampilkan transaksi operasional per tanggal hari ini.
+  5. `Semua`: Menampilkan seluruh arsip transaksi.
+- **Pencarian Multi-Parameter**: Kasir dapat mencari riwayat secara fleksibel melalui ID transaksi, nama siswa, NISN, kode voucher QR, nama menu produk yang dibeli, maupun nama petugas kasir.
+- **Perhitungan Saldo Bersih**: Bento Card menghitung penerimaan riil kasir hanya dari pesanan yang lunas (`isCompleted == true`), memisahkan alokasi **Kas PKK Sekolah** (`Rp 1.000 / transaksi`) dan **Hak Penitip** secara transparan.
+
+---
+
 ## 🌐 12. Daftar Endpoint REST API yang Terhubung
 
 | HTTP Method | Endpoint | Fungsi |
@@ -368,5 +390,91 @@ git push origin master
 
 ---
 
+## 🏷️ 13. Arsitektur Kategori Produk & Dropdown Penitip (Multi-Role Filtering)
+
+### A. Penyebab Masalah Filter Sebelumnya (Root Cause Analysis)
+1. **Ketidaksesuaian Nilai Default POS**: `PosViewModel` sebelumnya menginisialisasi `_selectedCategory = "Semua Menu"`, sedangkan `HomeScreen` memeriksa kesamaan `selectedCategory == "Semua"`. Hal ini menyebabkan evaluasi `product.category.equals("Semua Menu")` bernilai salah dan menyembunyikan semua produk saat peluncuran awal.
+2. **Ketiadaan Input Kategori Penitip**: Dialog penambahan produk mitra penitip sebelumnya hanya menerima input nama, harga, deskripsi, dan stok tanpa kolom kategori sehingga tersimpan sebagai `"Umum"` atau `null`.
+3. **Pencocokan String Parsial Rentan Gagal**: Produk berkategori `"Umum"` tidak cocok dengan chip filter `"Makanan"`, `"Minuman"`, atau `"Snack"`.
+
+### B. Solusi Cerdas yang Diimplementasikan
+1. **Normalisasi Pintar (`effectiveCategory`)**: Pada `ProductResponse`, ditambahkan computed property `effectiveCategory` yang memetakan kategori secara andal. Jika bernilai null/"Umum", sistem mendeteksi nama produk (misal: "Es Teh", "Kopi", "Jus" otomatis menjadi `"Minuman"`; "Risol", "Keripik", "Pastel" menjadi `"Snack"`; "Paket Hemat" menjadi `"Paket"`; lainnya default `"Makanan"`).
+2. **Material 3 Dropdown & Preset Chips untuk Penitip**: Komponen `SipekaDropdownField` dan 4 tombol preset (`Makanan`, `Minuman`, `Snack`, `Paket`) disematkan pada dialog tambah produk dengan validasi margin kas sekolah Rp 1.000.
+3. **Filter & Pencarian di Dashboard Penitip**: Mitra penjual kini memiliki bar pencarian dan chip filter kategori mandiri untuk memantau sisa stok dan produk terjual.
+4. **Keseragaman Chip Filter Antar Peran**: Kasir (POS) dan Siswa (Pembeli) kini menggunakan standar kategori seragam: `listOf("Semua", "Makanan", "Minuman", "Snack", "Paket")`.
+
+---
+
+## 📷 14. Pemindai QR Otomatis dalam Aplikasi (In-App Live Scanner Popup)
+
+### A. Latar Belakang & Transformasi UX
+Sebelumnya, pemindaian voucher QR pre-order di kasir mengandalkan `ActivityResultContracts.TakePicturePreview()` yang meluncurkan aplikasi kamera eksternal sistem Android dan mengharuskan petugas menekan tombol jepret foto manual.
+
+Sistem kini telah ditingkatkan menjadi **Popup Dialog Pemindai Otomatis di Dalam Aplikasi (In-App Live Scanner Modal)** menggunakan **CameraX (`ImageAnalysis`) + ZXing Decoder Engine**:
+1. **Tanpa Buka Kamera Eksternal**: Kamera langsung aktif di dalam popup dialog antarmuka SIPeKa tanpa berpindah aplikasi.
+2. **Deteksi Otomatis Real-time (Auto-Detect Zero Click)**: Begitu kode QR voucher siswa tertangkap di bingkai viewfinder kamera, mesin `ImageAnalysis` langsung memproses bitmap frame dan mengekstrak kode secara instan tanpa perlu menekan tombol shutter/jepret apapun.
+3. **Konfirmasi Visual & Transisi Mulus**: Saat QR terbaca, bingkai viewfinder berubah menjadi hijau dengan ikon centang sukses dan kode otomatis dimasukkan ke verifikasi pesanan kasir (`showQrDialog`). Petugas dapat langsung mencocokkan identitas fisik siswa (Nama, Kelas, NISN) dan menyerahkan makanan dengan aman.
+4. **Fitur Pendukung Kasir**:
+   - **Tombol Senter (Flashlight Toggle)**: Membantu pemindaian dalam kondisi pencahayaan kantin yang redup.
+   - **Pilihan Unggah Galeri**: Jika siswa menunjukkan tangkapan layar voucher via ponsel lain atau aplikasi perpesanan.
+   - **Animasi Laser Viewfinder**: Garis laser pemindai dinamis dengan 4 sudut bingkai *Warm Mocha Stitch*.
+
+---
+
+## 📱 15. Arsitektur Edge-to-Edge & Proteksi Camera Cutout (Safe Insets & Ergonomis Mobile Multi-Device)
+
+### A. Analisis Masalah Tampilan Layar (Root Cause)
+1. **Target SDK 37 & Android 15 Edge-to-Edge**: Android 15 memberlakukan rendering layar penuh (*edge-to-edge*) secara default. Komponen `Surface` kustom pada header atas (`HomeScreen`, `RiwayatScreen`, `ProfilKasirScreen`) tidak mengonsumsi *status bar insets*, sehingga lubang kamera depan (*punch-hole* / *cutout notch*) menutupi teks penting seperti nama toko "PKK Mart", badge "POS #01", status shift, dan tombol aksi.
+2. **Keterbatasan Tinggi Navigasi Bawah**: Terdapat pembatasan tinggi paksa `modifier = Modifier.height(64.dp)` pada `NavigationBar` Material 3 di beberapa layar, yang membuat label tab terpotong atau terdesak oleh *gesture pill* / 3 tombol navigasi sistem Android, sehingga tata letak terlihat tidak penuh (*tidak full* / terpotong).
+3. **Penataan Layar Riwayat POS**: Seluruh konten rekap bento, pencarian, dan `LazyColumn` sebelumnya terperangkap dalam parameter `topBar` pada `RiwayatScreen`, menyebabkan inkonsistensi rendering *scroll* dan area layar yang tidak terisi penuh.
+
+### B. Solusi Arsitektur yang Diterapkan
+1. **Aktivasi Global `enableEdgeToEdge()`**: Diinisialisasi pada `MainActivity.kt` sebelum `setContent`, memastikan seluruh sistem insets (status bars, navigation bars, display cutout, IME) tersalurkan dengan konsisten di Android 10 hingga 15+.
+2. **Header Bleed-Through dengan `statusBarsPadding()`**:
+   - Kontainer `Surface` berwarna espresso gelap tetap membentang penuh ke tepi paling atas layar (*edge-to-edge bleed*), memberikan nuansa status bar yang mewah dan menyatu.
+   - Elemen interaktif di dalamnya (nama kasir, tombol sync, teks brand) dilindungi dengan `Modifier.statusBarsPadding()`, sehingga otomatis turun secara aman di bawah posisi lubang kamera ponsel manapun (tengah, kiri, maupun *pill notch*).
+3. **Penyatuan Cutout pada Layar Siswa (`PembeliHomeScreen`)**:
+   - `Scaffold` pembeli menggunakan konfigurasi `contentWindowInsets = WindowInsets.statusBars.union(WindowInsets.displayCutout)`.
+   - Ucapan "Hai, Siswa", kelas, dan bar pencarian bulat selalu berada pada zona aman visual yang ergonomis dan bebas dari benturan fisik lubang kamera.
+4. **Navigasi Bawah Ergonomis & Responsif**:
+   - Menghapus pembatasan `height(64.dp)` pada `HomeScreen`, `RiwayatScreen`, `ProfilKasirScreen`, dan `AdminDashboardScreen`. `NavigationBar` kini secara dinamis beradaptasi dengan *system navigation bars* bawaan ponsel, menampilkan ikon 24dp dan label tebal dengan ruang sentuh yang nyaman.
+   - `RiwayatScreen` kini memiliki `NavigationBar` 3-tab persisten yang seragam dengan layar Kasir lainnya.
+5. **Proteksi Dialog & FAB Melayang**:
+   - Tombol tambah produk penitip (`FloatingActionButton`) dilengkapi `Modifier.navigationBarsPadding()` agar tidak tertutup bilah navigasi gestur.
+   - `LiveQrScannerPopup`, `LoginScreen`, `RegisterScreen`, dan `SplashScreen` menggunakan `Modifier.safeDrawingPadding()`, menjaga form dan viewfinder kamera tetap presisi di tengah layar tanpa terpotong.
+
+---
+
+## 👆 16. Optimasi Ergonomi Scroll, Thumbzone & Safe Area Multi-Peran (Unified Scrolling Architecture)
+
+### A. Analisis Masalah UX Scrolling & Ergonomi (Root Cause)
+1. **Scrolling Terperangkap (*Trapped Peephole Scrolling*)**: 
+   - Pada `CheckoutBottomSheet` dan dialog verifikasi QR kasir (`showQrDialog`), terdapat `LazyColumn(height = 160.dp / 220.dp)` bersarang di dalam kontainer yang memiliki `.verticalScroll()`. Hal ini menyebabkan konflik penangkapan gestur usapan jari (*gesture fighting*), di mana pengguna kesulitan menggulir rincian belanjaan tanpa terhenti di kotak kecil.
+2. **Scrolling Terbagi Dua (*Broken Thumb Reach Zone*)**:
+   - Di layar Kasir POS (`HomeScreen`), Riwayat Kasir (`RiwayatScreen`), Mitra Penitip (`PenitipDashboardScreen`), Tab Transaksi Admin (`AdminDashboardScreen`), dan Pesanan Saya Siswa (`PembeliHomeScreen`), elemen atas seperti Bento Card, Search Bar, Header Selamat Datang, dan Kategori Chips diletakkan di luar `LazyColumn` dalam sebuah `Column` statis.
+   - Akibatnya, sekitar 35–45% area atas layar (zona jangkauan ibu jari paling natural) menjadi kaku dan kebal terhadap gestur usapan gulir (*scroll gesture*). Pengguna terpaksa memindahkan ibu jari ke bagian bawah layar untuk menggulir.
+3. **Tertutup Floating Action Button & Bottom Bar (*Safe Area Overlap*)**:
+   - Pada Beranda Siswa (`PembeliMockupHomeTab`), tombol keranjang oranye melayang (FAB 56dp) menutupi produk pojok kanan bawah karena `contentPadding` bawah hanya 88dp.
+   - Pada Bottom Sheet Keranjang (`PembeliCartBottomSheet`), ketiadaan `navigationBarsPadding()` membuat tombol checkout "Konfirmasi & Buat Tiket QR" mepet atau bertabrakan dengan garis navigasi gestur Android.
+   - Pada dialog input formulir (`EditUserDialog`, `AddKasirDialog`, `OrderDetailDialog`), dialog tidak memiliki kemampuan scroll saat keyboard virtual aktif di ponsel berlayar ringkas.
+
+### B. Solusi Arsitektur yang Diterapkan
+1. **Penyatuan ke Daftar Malas Tunggal (*Unified Root Lazy Lists*)**:
+   - **Kasir POS (`HomeScreen.kt`)**: Seluruh elemen layar (Segmented Toggle, Notification Banner, Search Bar, Chips Kategori, Kas PKK Strip, dan Header) dijadikan item di dalam satu `LazyVerticalGrid` menggunakan `item(span = { GridItemSpan(2) })`. Seluruh permukaan layar kini 100% responsif terhadap usapan ibu jari.
+   - **Riwayat POS (`RiwayatScreen.kt`)**: Bento Card rekap omzet, Filter Tabs (`LazyRow`), Search Bar, dan Header Shift disatukan ke dalam satu root `LazyColumn` dengan `contentPadding(bottom = 32.dp)`.
+   - **Mitra Penitip (`PenitipDashboardScreen.kt`)**: Kartu akun toko, saldo belum dicairkan, search bar, dan chip filter disatukan ke dalam root `LazyColumn` dengan `contentPadding(bottom = 100.dp)` yang memberikan kelegaan sempurna di atas FAB Tambah Produk.
+   - **Admin Transaksi (`AdminDashboardScreen.kt`)**: Kartu omzet penjualan espresso dan pencarian ID transaksi disatukan ke root `LazyColumn(bottom = 36.dp)`.
+   - **Pesanan Siswa (`PembeliHomeScreen.kt`)**: Header "Pesanan Saya" dan Chips status pesanan disatukan ke root `LazyColumn(bottom = 36.dp)`.
+2. **Eliminasi Konflik Gestur Dialog & Bottom Sheet**:
+   - `CheckoutBottomSheet.kt` dan `showQrDialog` diubah menggunakan `Column` + `.forEach { ... }` murni di dalam kontainer yang dapat digulir, melenyapkan *nested lazy fighting* dan membuat pergerakan rincian produk sangat mulus.
+3. **Penyelarasan Thumbzone & Safe Area Bottom Padding**:
+   - `PembeliMockupHomeTab`: `contentPadding` bawah ditingkatkan menjadi `105.dp` sehingga kartu produk paling bawah dapat digulir bebas melewati FAB keranjang belanja.
+   - `PembeliCartBottomSheet`: Menambahkan `Modifier.navigationBarsPadding()` agar tombol checkout selalu berada di atas *home gesture pill* perangkat modern.
+   - `PembeliEditProfileTab` & `ProfilKasirScreen`: Jarak pemisah bawah disetel ke `48.dp` dan `36.dp`, memposisikan tombol Logout dalam jangkauan ibu jari yang ergonomis tanpa terasa terhimpit tepi layar.
+   - Semua dialog form (`OrderDetailDialog`, `EditUserDialog`, `AddKasirDialog`, `ProfilKasirConfirmDialog`) dilengkapi `Modifier.verticalScroll(rememberScrollState())` agar adaptif terhadap kemunculan *soft keyboard*.
+
+---
+
 *Dokumentasi ini disusun dan dipelihara secara otomatis untuk menjamin integritas arsitektur SIPeKa SMKN 8 Jakarta.*
+
 

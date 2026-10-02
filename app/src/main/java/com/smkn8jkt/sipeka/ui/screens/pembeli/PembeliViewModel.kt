@@ -54,7 +54,7 @@ class PembeliViewModel(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
-    private val _selectedCategory = MutableStateFlow("Semua Menu")
+    private val _selectedCategory = MutableStateFlow("Semua")
     val selectedCategory: StateFlow<String> = _selectedCategory.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
@@ -67,10 +67,11 @@ class PembeliViewModel(
         _searchQuery
     ) { prods, category, query ->
         prods.filter { product ->
+            val effectiveCat = product.effectiveCategory
             val matchCategory = when {
                 category.equals("Semua Menu", ignoreCase = true) || category.equals("Semua", ignoreCase = true) -> true
-                category.equals("Paket", ignoreCase = true) -> (product.category ?: "").contains("paket", ignoreCase = true) || (product.name ?: "").contains("paket", ignoreCase = true)
-                else -> (product.category ?: "").contains(category, ignoreCase = true)
+                category.equals("Paket", ignoreCase = true) -> effectiveCat.equals("Paket", ignoreCase = true) || (product.name ?: "").contains("paket", ignoreCase = true)
+                else -> effectiveCat.equals(category, ignoreCase = true)
             }
 
             val matchQuery = if (query.isBlank()) {
@@ -78,7 +79,7 @@ class PembeliViewModel(
             } else {
                 (product.name ?: "").contains(query, ignoreCase = true) ||
                         (product.description ?: "").contains(query, ignoreCase = true) ||
-                        (product.category ?: "").contains(query, ignoreCase = true)
+                        effectiveCat.contains(query, ignoreCase = true)
             }
 
             matchCategory && matchQuery
@@ -302,6 +303,17 @@ class PembeliViewModel(
                 tokenManager?.saveUserOrder(generatedOrderId)
                 tokenManager?.saveUserOrder(qrCodeString)
 
+                // Update stok lokal agar katalog langsung berkurang secara instan
+                val currentProds = _products.value.toMutableList()
+                items.forEach { cartItem ->
+                    val pIndex = currentProds.indexOfFirst { it.id == cartItem.product.id }
+                    if (pIndex >= 0) {
+                        val oldP = currentProds[pIndex]
+                        currentProds[pIndex] = oldP.copy(stock = (oldP.stock - cartItem.quantity).coerceAtLeast(0))
+                    }
+                }
+                _products.value = currentProds
+
                 _activeTicketOrder.value = ticketOrder
                 _cartItems.value = emptyList()
 
@@ -311,6 +323,31 @@ class PembeliViewModel(
                 _errorMessage.value = e.localizedMessage ?: "Gagal membuat pesanan pre-order"
             } finally {
                 _isCheckoutLoading.value = false
+            }
+        }
+    }
+
+    // --- BATALKAN PRE-ORDER (HANYA JIKA STATUS MASIH PENDING) ---
+    fun cancelPreOrder(orderIdOrQr: String) {
+        viewModelScope.launch {
+            _isOrdersLoading.value = true
+            try {
+                val (success, message) = tokenManager?.cancelSharedOrder(orderIdOrQr)
+                    ?: Pair(false, "Sistem penyimpanan tidak dapat diakses.")
+                if (success) {
+                    _updateProfileSuccess.value = message
+                    fetchMyOrders()
+                    fetchProducts()
+                    if (_activeTicketOrder.value?.id == orderIdOrQr || _activeTicketOrder.value?.qrCode == orderIdOrQr) {
+                        _activeTicketOrder.value = _activeTicketOrder.value?.copy(status = "CANCELLED")
+                    }
+                } else {
+                    _errorMessage.value = message
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Gagal membatalkan pesanan: ${e.localizedMessage}"
+            } finally {
+                _isOrdersLoading.value = false
             }
         }
     }

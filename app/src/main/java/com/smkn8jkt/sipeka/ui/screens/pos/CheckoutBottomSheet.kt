@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -123,6 +124,7 @@ fun CheckoutBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .navigationBarsPadding()
                 .padding(horizontal = 20.dp, vertical = 8.dp)
                 .verticalScroll(rememberScrollState())
         ) {
@@ -165,7 +167,7 @@ fun CheckoutBottomSheet(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Cart Items List
+            // Cart Items List (Ergonomic Full Height Flow - No Trapped Scroll)
             if (cartItems.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxWidth().padding(24.dp),
@@ -174,11 +176,11 @@ fun CheckoutBottomSheet(
                     Text("Keranjang kosong", color = TextMuted, fontSize = 13.sp)
                 }
             } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth().height(160.dp),
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(cartItems, key = { it.product.id }) { item ->
+                    cartItems.forEach { item ->
                         CartItemRow(
                             cartItem = item,
                             onIncrease = { viewModel.increaseQuantity(item.product.id) },

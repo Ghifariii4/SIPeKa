@@ -23,6 +23,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -73,6 +78,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -200,6 +206,7 @@ fun PembeliHomeScreen(
 
     Scaffold(
         containerColor = PageBgWarm,
+        contentWindowInsets = WindowInsets.statusBars.union(WindowInsets.displayCutout),
         floatingActionButton = {
             // Floating Circular Orange Cart Button with Badge matching mockup
             if (selectedTab == 0) {
@@ -410,7 +417,8 @@ fun PembeliHomeScreen(
     activeTicketOrder?.let { order ->
         QrTicketDialog(
             order = order,
-            onDismiss = { viewModel.closeTicket() }
+            onDismiss = { viewModel.closeTicket() },
+            onCancelOrder = { viewModel.cancelPreOrder(it) }
         )
     }
 
@@ -482,11 +490,11 @@ fun PembeliMockupHomeTab(
     onDecreaseQuantity: (String) -> Unit,
     onRefresh: () -> Unit
 ) {
-    val categories = remember { listOf("Semua Menu", "Makanan", "Minuman", "Paket") }
+    val categories = remember { listOf("Semua", "Makanan", "Minuman", "Snack", "Paket") }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 88.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 105.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxSize()
@@ -571,7 +579,8 @@ fun PembeliMockupHomeTab(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 items(categories) { cat ->
-                    val isSelected = selectedCategory.equals(cat, ignoreCase = true)
+                    val isSelected = selectedCategory.equals(cat, ignoreCase = true) ||
+                            (cat.equals("Semua", ignoreCase = true) && selectedCategory.equals("Semua Menu", ignoreCase = true))
                     Surface(
                         shape = RoundedCornerShape(18.dp),
                         color = if (isSelected) DarkMochaHero else ChipUnselectedBg,
@@ -1035,205 +1044,224 @@ fun PembeliOrdersTab(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 36.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Spacer(modifier = Modifier.height(16.dp))
-
         // Header Title
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Pesanan Saya",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Black,
-                    color = TextDark
-                )
-                Text(
-                    text = "Hanya menampilkan riwayat pesanan milik Anda ($userName)",
-                    fontSize = 11.sp,
-                    color = TextMuted
-                )
-            }
-            IconButton(onClick = onRefresh) {
-                Icon(Icons.Default.Refresh, contentDescription = "Muat Ulang", tint = DarkMochaHero)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Filter Chip Status
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("Semua", "Pending", "Selesai").forEach { filter ->
-                val isSelected = selectedFilter == filter
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = if (isSelected) DarkMochaHero else Color.White,
-                    border = BorderStroke(1.dp, if (isSelected) DarkMochaHero else Color(0xFFE5E0D8)),
-                    modifier = Modifier.clickable { selectedFilter = filter }
-                ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
                     Text(
-                        text = if (filter == "Pending") "Menunggu Pengambilan" else filter,
-                        fontSize = 11.sp,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                        color = if (isSelected) Color.White else TextDark,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+                        text = "Pesanan Saya",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Black,
+                        color = TextDark
                     )
+                    Text(
+                        text = "Hanya menampilkan riwayat pesanan milik Anda ($userName)",
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+                }
+                IconButton(onClick = onRefresh) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Muat Ulang", tint = DarkMochaHero)
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
+        // Filter Chip Status
+        item {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("Semua", "Pending", "Selesai").forEach { filter ->
+                    val isSelected = selectedFilter == filter
+                    Surface(
+                        shape = RoundedCornerShape(18.dp),
+                        color = if (isSelected) DarkMochaHero else Color.White,
+                        border = BorderStroke(1.dp, if (isSelected) DarkMochaHero else Color(0xFFE5E0D8)),
+                        modifier = Modifier.clickable { selectedFilter = filter }
+                    ) {
+                        Text(
+                            text = if (filter == "Pending") "Menunggu Pengambilan" else filter,
+                            fontSize = 11.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else TextDark,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
+                        )
+                    }
+                }
+            }
+        }
 
         if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = VibrantOrange, modifier = Modifier.size(32.dp))
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = VibrantOrange, modifier = Modifier.size(32.dp))
+                }
             }
         } else if (filtered.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-                        contentDescription = null,
-                        tint = TextMuted,
-                        modifier = Modifier.size(48.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Belum ada pesanan ${if (selectedFilter != "Semua") selectedFilter.lowercase() else ""} untuk akun Anda.",
-                        color = TextMuted,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Silakan pesan menu di tab Beranda.",
-                        color = HeaderAmberGold,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
+                            contentDescription = null,
+                            tint = TextMuted,
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Belum ada pesanan ${if (selectedFilter != "Semua") selectedFilter.lowercase() else ""} untuk akun Anda.",
+                            color = TextMuted,
+                            fontSize = 13.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Silakan pesan menu di tab Beranda.",
+                            color = HeaderAmberGold,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
         } else {
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(filtered, key = { it.id ?: it.qrCode ?: "" }) { order ->
-                    val isPending = order.status.isNullOrBlank() ||
-                            order.status.equals("pending", ignoreCase = true) ||
-                            order.status.equals("proses", ignoreCase = true)
-                    val shortId = order.id?.take(8)?.uppercase() ?: order.qrCode?.takeLast(8)?.uppercase() ?: "-"
+            items(filtered, key = { it.id ?: it.qrCode ?: "" }) { order ->
+                val isPending = order.status.isNullOrBlank() ||
+                        order.status.equals("pending", ignoreCase = true) ||
+                        order.status.equals("proses", ignoreCase = true)
+                val shortId = order.id?.take(8)?.uppercase() ?: order.qrCode?.takeLast(8)?.uppercase() ?: "-"
 
-                    Card(
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { onOpenTicket(order) },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    border = BorderStroke(1.dp, Color(0xFFEFEAE2))
+                ) {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onOpenTicket(order) },
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                        border = BorderStroke(1.dp, Color(0xFFEFEAE2))
+                            .padding(14.dp)
                     ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(14.dp)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Surface(
-                                        shape = RoundedCornerShape(6.dp),
-                                        color = SoftPeachBadge
-                                    ) {
-                                        Text(
-                                            text = "#$shortId",
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = VibrantOrange,
-                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
-                                        )
-                                    }
-
-                                    Text(
-                                        text = formatOrderDate(order.displayCreatedAt),
-                                        fontSize = 11.sp,
-                                        color = TextMuted
-                                    )
-                                }
-
                                 Surface(
                                     shape = RoundedCornerShape(6.dp),
-                                    color = if (isPending) SoftPeachBadge else GreenSuccessContainer
+                                    color = SoftPeachBadge
                                 ) {
                                     Text(
-                                        text = if (isPending) "PENDING" else "SELESAI",
-                                        fontSize = 9.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = if (isPending) VibrantOrange else GreenSuccess,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            // Rincian Item Ringkas
-                            val displayItems = order.displayItems
-                            if (displayItems.isNotEmpty()) {
-                                Text(
-                                    text = displayItems.joinToString(", ") { "${it.quantity ?: 1}x ${it.displayProductName}" },
-                                    fontSize = 12.sp,
-                                    color = TextDark,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                            }
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.QrCode,
-                                        contentDescription = "QR",
-                                        tint = if (isPending) VibrantOrange else DarkMochaHero,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Text(
-                                        text = if (isPending) "Lihat QR Tiket Pengambilan" else "Rincian Struk",
+                                        text = "#$shortId",
                                         fontSize = 11.sp,
-                                        color = if (isPending) VibrantOrange else DarkMochaHero,
-                                        fontWeight = FontWeight.Bold
+                                        fontWeight = FontWeight.Bold,
+                                        color = VibrantOrange,
+                                        modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
                                     )
                                 }
 
                                 Text(
-                                    text = (order.totalAmount ?: 0.0).toRupiahFormat(),
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Black,
-                                    color = TextDark
+                                    text = formatOrderDate(order.displayCreatedAt),
+                                    fontSize = 11.sp,
+                                    color = TextMuted
                                 )
                             }
+
+                            val isCancelled = order.isCancelled
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = when {
+                                    isCancelled -> Color(0xFFF3F4F6)
+                                    isPending -> SoftPeachBadge
+                                    else -> GreenSuccessContainer
+                                }
+                            ) {
+                                Text(
+                                    text = when {
+                                        isCancelled -> "BATAL"
+                                        isPending -> "PENDING"
+                                        else -> "SELESAI"
+                                    },
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = when {
+                                        isCancelled -> Color(0xFF6B7280)
+                                        isPending -> VibrantOrange
+                                        else -> GreenSuccess
+                                    },
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // Rincian Item Ringkas
+                        val displayItems = order.displayItems
+                        if (displayItems.isNotEmpty()) {
+                            Text(
+                                text = displayItems.joinToString(", ") { "${it.quantity ?: 1}x ${it.displayProductName}" },
+                                fontSize = 12.sp,
+                                color = TextDark,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.QrCode,
+                                    contentDescription = "QR",
+                                    tint = if (isPending) VibrantOrange else DarkMochaHero,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Text(
+                                    text = if (isPending) "Lihat QR Tiket Pengambilan" else "Rincian Struk",
+                                    fontSize = 11.sp,
+                                    color = if (isPending) VibrantOrange else DarkMochaHero,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Text(
+                                text = (order.totalAmount ?: 0.0).toRupiahFormat(),
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Black,
+                                color = TextDark
+                            )
                         }
                     }
                 }
@@ -1552,7 +1580,7 @@ fun PembeliEditProfileTab(
             Text("Keluar dari Akun", fontWeight = FontWeight.Bold)
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(48.dp))
     }
 }
 
@@ -1581,7 +1609,8 @@ fun PembeliCartBottomSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 28.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 20.dp)
         ) {
             // Header Keranjang
             Row(
@@ -1806,16 +1835,16 @@ fun PembeliCartBottomSheet(
 @Composable
 fun QrTicketDialog(
     order: OrderData,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onCancelOrder: ((String) -> Unit)? = null
 ) {
     val qrCodeString = order.qrCode ?: "QR-PREORDER-${order.id?.take(8)?.uppercase() ?: "1043"}"
     val qrBitmap = remember(qrCodeString) {
         QrCodeUtil.generateQrBitmap(qrCodeString, size = 450)
     }
 
-    val isPending = order.status.isNullOrBlank() ||
-            order.status.equals("pending", ignoreCase = true) ||
-            order.status.equals("proses", ignoreCase = true)
+    val isPending = order.isPending
+    val isCancelled = order.isCancelled
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1848,13 +1877,25 @@ fun QrTicketDialog(
                 // Status Badge
                 Surface(
                     shape = RoundedCornerShape(6.dp),
-                    color = if (isPending) SoftPeachBadge else GreenSuccessContainer
+                    color = when {
+                        isCancelled -> Color(0xFFF3F4F6)
+                        isPending -> SoftPeachBadge
+                        else -> GreenSuccessContainer
+                    }
                 ) {
                     Text(
-                        text = if (isPending) "MENUNGGU PENGAMBILAN (PENDING)" else "SELESAI / SUDAH DIAMBIL",
+                        text = when {
+                            isCancelled -> "PESANAN DIBATALKAN"
+                            isPending -> "MENUNGGU PENGAMBILAN (PENDING)"
+                            else -> "SELESAI / SUDAH DIAMBIL"
+                        },
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        color = if (isPending) VibrantOrange else GreenSuccess,
+                        color = when {
+                            isCancelled -> Color(0xFF4B5563)
+                            isPending -> VibrantOrange
+                            else -> GreenSuccess
+                        },
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
@@ -1990,6 +2031,68 @@ fun QrTicketDialog(
                         fontWeight = FontWeight.Black,
                         color = TextDark
                     )
+                }
+
+                // Informasi Petugas Kasir & Serah-Terima (Bukti Resmi)
+                if (order.isCompleted) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = GreenSuccessContainer,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(10.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Check,
+                                    contentDescription = null,
+                                    tint = GreenSuccess,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "Makanan Telah Diterima!",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = GreenSuccess
+                                )
+                            }
+                            if (!order.kasirName.isNullOrBlank()) {
+                                Spacer(modifier = Modifier.height(3.dp))
+                                Text(
+                                    text = "Petugas Kasir: ${order.kasirName}",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF14532D)
+                                )
+                            }
+                            if (!order.completedAt.isNullOrBlank()) {
+                                Text(
+                                    text = "Waktu Verifikasi: ${formatOrderDate(order.completedAt)}",
+                                    fontSize = 10.sp,
+                                    color = Color(0xFF14532D)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Tombol Batalkan Pesanan (Jika masih PENDING)
+                if (isPending && onCancelOrder != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = {
+                            onCancelOrder(order.id ?: order.qrCode ?: "")
+                            onDismiss()
+                        },
+                        shape = RoundedCornerShape(10.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFDC2626)),
+                        border = BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(Icons.Default.Close, contentDescription = null, modifier = Modifier.size(14.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Batalkan Pesanan Pre-Order", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         },

@@ -144,18 +144,20 @@ class PenitipViewModel(
         name: String,
         price: String,
         desc: String,
-        stock: String
+        stock: String,
+        category: String = "Makanan"
     ) {
         val cleanName = name.trim()
         val priceVal = price.toDoubleOrNull() ?: 0.0
         val stockVal = stock.toIntOrNull() ?: 0
+        val cleanCategory = if (category.isBlank()) "Makanan" else category.trim()
 
         if (cleanName.isBlank()) {
             _errorMessage.value = "Nama produk wajib diisi."
             return
         }
-        if (priceVal <= 0) {
-            _errorMessage.value = "Harga produk harus lebih dari Rp 0."
+        if (priceVal <= 1000) {
+            _errorMessage.value = "Harga jual harus lebih dari Rp 1.000 (karena margin operasional kas sekolah adalah Rp 1.000 per porsi)."
             return
         }
         if (stockVal <= 0) {
@@ -192,6 +194,7 @@ class PenitipViewModel(
                 val textMediaType = "text/plain".toMediaTypeOrNull()
                 val nameBody = cleanName.toRequestBody(textMediaType)
                 val priceBody = priceVal.toString().toRequestBody(textMediaType)
+                val categoryBody = cleanCategory.toRequestBody(textMediaType)
                 val descBody = desc.trim().toRequestBody(textMediaType)
                 val stockBody = stockVal.toString().toRequestBody(textMediaType)
                 val marginBody = "1000.0".toRequestBody(textMediaType)
@@ -201,6 +204,7 @@ class PenitipViewModel(
                     image = imagePart,
                     name = nameBody,
                     price = priceBody,
+                    category = categoryBody,
                     description = descBody,
                     stock = stockBody,
                     schoolMargin = marginBody
@@ -208,16 +212,16 @@ class PenitipViewModel(
 
                 if (response.isSuccessful) {
                     _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' berhasil dititipkan!"
+                    _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
                     fetchDashboard()
                 } else {
                     _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' berhasil dititipkan!"
+                    _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
                     fetchDashboard()
                 }
             } catch (e: Exception) {
                 _isAddSuccess.value = true
-                _successMessage.value = "Produk '$cleanName' berhasil dititipkan!"
+                _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
                 fetchDashboard()
             } finally {
                 _isAddLoading.value = false
@@ -225,8 +229,9 @@ class PenitipViewModel(
         }
     }
 
-    fun addProduct(name: String, price: Double, stock: Int) {
+    fun addProduct(name: String, price: Double, stock: Int, category: String = "Makanan") {
         val cleanName = name.trim()
+        val cleanCategory = if (category.isBlank()) "Makanan" else category.trim()
         if (cleanName.isBlank()) {
             _errorMessage.value = "Nama produk wajib diisi."
             return
@@ -249,17 +254,18 @@ class PenitipViewModel(
                 val request = AddProductRequest(
                     name = cleanName,
                     price = price,
+                    category = cleanCategory,
                     schoolMargin = 1000.0,
                     stock = stock
                 )
                 val response = apiService.addProduct(request)
                 if (response.isSuccessful) {
                     _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' berhasil dititipkan ke Toko PKK!"
+                    _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan ke Toko PKK!"
                     fetchDashboard()
                 } else {
                     _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' berhasil dititipkan!"
+                    _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
                     fetchDashboard()
                 }
             } catch (e: Exception) {

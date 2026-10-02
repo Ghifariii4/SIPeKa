@@ -19,6 +19,25 @@ data class ProductResponse(
 ) {
     val totalSold: Int
         get() = soldCount ?: soldQty ?: terjual ?: 0
+
+    val effectiveCategory: String
+        get() {
+            val cat = category?.trim() ?: ""
+            if (cat.equals("Makanan", ignoreCase = true)) return "Makanan"
+            if (cat.equals("Minuman", ignoreCase = true)) return "Minuman"
+            if (cat.equals("Snack", ignoreCase = true) || cat.equals("Camilan", ignoreCase = true) || cat.equals("Cemilan", ignoreCase = true)) return "Snack"
+            if (cat.contains("Paket", ignoreCase = true) || cat.contains("Combo", ignoreCase = true)) return "Paket"
+            if (cat.equals("Roti", ignoreCase = true) || cat.contains("Pastry", ignoreCase = true)) return "Snack"
+
+            val lowerName = name.lowercase()
+            return when {
+                listOf("paket", "combo", "bundling", "hemat").any { lowerName.contains(it) } -> "Paket"
+                listOf("es ", " es", "teh", "kopi", "jus", "susu", "air", "drink", "boba", "lemon", "mineral", "sirup", "tea", "coffee", "latte", "matcha", "fanta", "coca", "sprite", "milo", "nutrisari").any { lowerName.contains(it) } -> "Minuman"
+                listOf("snack", "keripik", "ciki", "risol", "pastel", "gorengan", "kentang", "roti", "kue", "biskuit", "wafer", "bakwan", "tahu", "tempe", "cireng", "siomay", "dimsum", "pisang", "donat", "toast", "pudding", "puding", "chips", "molen", "lemper", "lumpia").any { lowerName.contains(it) } -> "Snack"
+                cat.isNotBlank() && !cat.equals("Umum", ignoreCase = true) -> cat.replaceFirstChar { it.uppercase() }
+                else -> "Makanan"
+            }
+        }
 }
 
 data class PenitipDashboardResponse(
@@ -34,6 +53,7 @@ data class PenitipDashboardResponse(
 data class AddProductRequest(
     @SerializedName("name") val name: String,
     @SerializedName("price") val price: Double,
+    @SerializedName("category") val category: String? = "Makanan",
     @SerializedName("school_margin") val schoolMargin: Double = 1000.0,
     @SerializedName("stock") val stock: Int
 )
@@ -166,14 +186,18 @@ data class OrderData(
     val displayItems: List<OrderItemData>
         get() = items ?: orderItems ?: orderItemsSnake ?: emptyList()
 
+    val isCancelled: Boolean
+        get() = status.equals("cancelled", ignoreCase = true) ||
+                status.equals("batal", ignoreCase = true)
+
     val isCompleted: Boolean
         get() = status.equals("completed", ignoreCase = true) ||
                 status.equals("sukses", ignoreCase = true) ||
                 status.equals("selesai", ignoreCase = true) ||
-                !completedAt.isNullOrBlank()
+                (!completedAt.isNullOrBlank() && !isCancelled)
 
     val isPending: Boolean
-        get() = !isCompleted
+        get() = !isCompleted && !isCancelled
 }
 
 data class OrderItemData(

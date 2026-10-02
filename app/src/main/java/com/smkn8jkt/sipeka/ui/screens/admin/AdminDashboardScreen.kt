@@ -238,8 +238,7 @@ fun AdminDashboardScreen(
         bottomBar = {
             NavigationBar(
                 containerColor = CardCreamWhite,
-                tonalElevation = 8.dp,
-                modifier = Modifier.height(64.dp)
+                tonalElevation = 8.dp
             ) {
                 NavigationBarItem(
                     selected = selectedTab == 0,
@@ -758,137 +757,143 @@ fun AdminTransactionsTab(
         filteredOrders.sumOf { it.totalAmount ?: 0.0 }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 36.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Spacer(modifier = Modifier.height(14.dp))
-
         // Total Omzet Card (Dark Espresso)
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = BgDarkEspresso),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = BgDarkEspresso),
+                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
             ) {
-                Column {
-                    Text(
-                        text = "Total Omzet Penjualan",
-                        fontSize = 11.sp,
-                        color = BgWarmTan,
-                        fontWeight = FontWeight.Medium
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = totalOmzet.toRupiahFormat(),
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BtnCreamWhite
-                    )
-                }
-
-                Surface(
-                    shape = RoundedCornerShape(10.dp),
-                    color = BtnMocha.copy(alpha = 0.5f)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "${filteredOrders.size} Transaksi",
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = BtnCreamWhite,
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
+                    Column {
+                        Text(
+                            text = "Total Omzet Penjualan",
+                            fontSize = 11.sp,
+                            color = BgWarmTan,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = totalOmzet.toRupiahFormat(),
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BtnCreamWhite
+                        )
+                    }
+
+                    Surface(
+                        shape = RoundedCornerShape(10.dp),
+                        color = BtnMocha.copy(alpha = 0.5f)
+                    ) {
+                        Text(
+                            text = "${filteredOrders.size} Transaksi",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BtnCreamWhite,
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
-
         // Search Bar
-        OutlinedTextField(
-            value = searchQuery,
-            onValueChange = { searchQuery = it },
-            placeholder = { Text("Cari ID Transaksi...", fontSize = 13.sp, color = TextMuted) },
-            singleLine = true,
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }) {
-                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted)
-                    }
-                }
-            },
-            shape = CircleShape,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = CardCreamWhite,
-                unfocusedContainerColor = CardCreamWhite,
-                focusedBorderColor = BtnDarkChocolate,
-                unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f),
-                focusedTextColor = TextDark,
-                unfocusedTextColor = TextDark
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (isLoading) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Memuat data penjualan...", color = TextMuted, fontSize = 14.sp)
-            }
-        } else if (filteredOrders.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Belum ada data transaksi penjualan.", color = TextMuted, fontSize = 13.sp)
-            }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                groupedOrders.forEach { (headerTitle, ordersInGroup) ->
-                    item {
-                        Surface(
-                            color = BgDarkEspresso.copy(alpha = 0.12f),
-                            shape = RoundedCornerShape(8.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 4.dp, bottom = 2.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.CalendarToday,
-                                    contentDescription = "Shift",
-                                    tint = BtnDarkChocolate,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = headerTitle,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = TextDark
-                                )
-                            }
+        item {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Cari ID Transaksi...", fontSize = 13.sp, color = TextMuted) },
+                singleLine = true,
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted)
                         }
                     }
+                },
+                shape = CircleShape,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = CardCreamWhite,
+                    unfocusedContainerColor = CardCreamWhite,
+                    focusedBorderColor = BtnDarkChocolate,
+                    unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f),
+                    focusedTextColor = TextDark,
+                    unfocusedTextColor = TextDark
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
 
-                    items(ordersInGroup, key = { it.id ?: "" }) { order ->
-                        AdminTransactionCard(
-                            order = order,
-                            onClick = { onSelectOrder(order) }
-                        )
+        if (isLoading) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Memuat data penjualan...", color = TextMuted, fontSize = 14.sp)
+                }
+            }
+        } else if (filteredOrders.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Belum ada data transaksi penjualan.", color = TextMuted, fontSize = 13.sp)
+                }
+            }
+        } else {
+            groupedOrders.forEach { (headerTitle, ordersInGroup) ->
+                item {
+                    Surface(
+                        color = BgDarkEspresso.copy(alpha = 0.12f),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp, bottom = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CalendarToday,
+                                contentDescription = "Shift",
+                                tint = BtnDarkChocolate,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = headerTitle,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextDark
+                            )
+                        }
                     }
+                }
+
+                items(ordersInGroup, key = { it.id ?: "" }) { order ->
+                    AdminTransactionCard(
+                        order = order,
+                        onClick = { onSelectOrder(order) }
+                    )
                 }
             }
         }
@@ -1391,7 +1396,12 @@ fun EditUserDialog(
             }
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
                 SipekaTextField(
                     value = nameInput,
                     onValueChange = { nameInput = it },
@@ -1597,7 +1607,12 @@ fun AddKasirDialog(
             )
         },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 SipekaTextField(
                     value = nipInput,
                     onValueChange = { nipInput = it },
@@ -1674,7 +1689,11 @@ fun OrderDetailDialog(
             }
         },
         text = {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = BgWarmTan.copy(alpha = 0.25f),

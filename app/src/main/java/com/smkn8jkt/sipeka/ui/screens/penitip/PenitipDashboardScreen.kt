@@ -7,6 +7,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +20,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,9 +33,13 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddAPhoto
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.Visibility
@@ -88,6 +95,7 @@ import com.smkn8jkt.sipeka.data.model.ProductResponse
 import com.smkn8jkt.sipeka.data.remote.TokenManager
 import com.smkn8jkt.sipeka.navigation.Screen
 import com.smkn8jkt.sipeka.ui.components.PrimaryButton
+import com.smkn8jkt.sipeka.ui.components.SipekaDropdownField
 import com.smkn8jkt.sipeka.ui.components.SipekaTextField
 import com.smkn8jkt.sipeka.ui.screens.auth.AuthViewModel
 import com.smkn8jkt.sipeka.ui.screens.pos.ProductImage
@@ -172,6 +180,23 @@ fun PenitipDashboardScreen(
 
     val products = dashboardData?.products ?: emptyList()
     val unpaidEarnings = dashboardData?.effectiveEarnings ?: 0.0
+
+    var penitipSearchQuery by remember { mutableStateOf("") }
+    var selectedPenitipCategory by remember { mutableStateOf("Semua") }
+    val penitipCategories = remember { listOf("Semua", "Makanan", "Minuman", "Snack", "Paket") }
+
+    val filteredProducts = remember(products, penitipSearchQuery, selectedPenitipCategory) {
+        products.filter { product ->
+            val effectiveCat = product.effectiveCategory
+            val matchesCategory = selectedPenitipCategory.equals("Semua", ignoreCase = true) ||
+                    effectiveCat.equals(selectedPenitipCategory, ignoreCase = true)
+            val matchesSearch = penitipSearchQuery.isBlank() ||
+                    (product.name ?: "").contains(penitipSearchQuery, ignoreCase = true) ||
+                    (product.description ?: "").contains(penitipSearchQuery, ignoreCase = true) ||
+                    effectiveCat.contains(penitipSearchQuery, ignoreCase = true)
+            matchesCategory && matchesSearch
+        }
+    }
 
     Scaffold(
         containerColor = com.smkn8jkt.sipeka.ui.theme.BgLightCanvas,
@@ -270,7 +295,8 @@ fun PenitipDashboardScreen(
                 onClick = { showAddDialog = true },
                 containerColor = BtnDarkChocolate,
                 contentColor = BtnCreamWhite,
-                shape = CircleShape
+                shape = CircleShape,
+                modifier = Modifier.navigationBarsPadding()
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
@@ -279,16 +305,21 @@ fun PenitipDashboardScreen(
             }
         }
     ) { innerPadding ->
-        Column(
+        LazyColumn(
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                end = 16.dp,
+                top = 14.dp,
+                bottom = 100.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(horizontal = 16.dp)
         ) {
-            Spacer(modifier = Modifier.height(14.dp))
-
             // INFORMASI AKUN MITRA PENITIP CARD
-            Card(
+            item {
+                Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
@@ -354,75 +385,75 @@ fun PenitipDashboardScreen(
                     }
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            // HEADER CARD: PENDAPATAN BELUM DICAIRKAN (Dark Espresso Gradient)
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(BgDarkEspresso, BtnDarkChocolate)
-                            )
-                        )
-                        .padding(20.dp)
+        // HEADER CARD: PENDAPATAN BELUM DICAIRKAN (Dark Espresso Gradient)
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
                 ) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
-                                    .background(BtnMocha.copy(alpha = 0.35f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AccountBalanceWallet,
-                                    contentDescription = "Earnings",
-                                    tint = BtnCreamWhite,
-                                    modifier = Modifier.size(20.dp)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(BgDarkEspresso, BtnDarkChocolate)
+                                )
+                            )
+                            .padding(20.dp)
+                    ) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(38.dp)
+                                        .clip(CircleShape)
+                                        .background(BtnMocha.copy(alpha = 0.35f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccountBalanceWallet,
+                                        contentDescription = "Earnings",
+                                        tint = BtnCreamWhite,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(
+                                    text = "Pendapatan Belum Dicairkan",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = BgWarmTan
                                 )
                             }
-                            Spacer(modifier = Modifier.width(10.dp))
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
                             Text(
-                                text = "Pendapatan Belum Dicairkan",
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = BgWarmTan
+                                text = unpaidEarnings.toRupiahFormat(),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = BtnCreamWhite
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            Text(
+                                text = "Rumus: (Harga Jual - Rp 1.000) × Terjual",
+                                fontSize = 11.sp,
+                                color = BgWarmTan.copy(alpha = 0.85f)
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        Text(
-                            text = unpaidEarnings.toRupiahFormat(),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = BtnCreamWhite
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "Rumus: (Harga Jual - Rp 1.000) × Terjual",
-                            fontSize = 11.sp,
-                            color = BgWarmTan.copy(alpha = 0.85f)
-                        )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
-
             // SECTION HEADER: DAFTAR PRODUK TITIPAN
-            Row(
+            item {
+                Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -456,68 +487,166 @@ fun PenitipDashboardScreen(
                     )
                 }
             }
+        }
 
-            Spacer(modifier = Modifier.height(10.dp))
+        // SEARCH BAR & KATEGORI FILTER UNTUK PENITIP
+            if (products.isNotEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = penitipSearchQuery,
+                            onValueChange = { penitipSearchQuery = it },
+                            placeholder = { Text("Cari produk titipan Anda...", fontSize = 12.sp, color = TextMuted) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = "Cari",
+                                    tint = BtnDarkChocolate,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            trailingIcon = {
+                                if (penitipSearchQuery.isNotBlank()) {
+                                    IconButton(onClick = { penitipSearchQuery = "" }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Clear,
+                                            contentDescription = "Hapus",
+                                            tint = TextMuted,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = TextDark,
+                                unfocusedTextColor = TextDark,
+                                focusedContainerColor = CardCreamWhite,
+                                unfocusedContainerColor = CardCreamWhite,
+                                focusedBorderColor = BtnDarkChocolate,
+                                unfocusedBorderColor = OutlineWarm.copy(alpha = 0.5f)
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp)
+                        )
+
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            items(penitipCategories) { cat ->
+                                val isSelected = selectedPenitipCategory.equals(cat, ignoreCase = true)
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
+                                    border = if (!isSelected) BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.5f)) else null,
+                                    modifier = Modifier.clickable { selectedPenitipCategory = cat }
+                                ) {
+                                    Text(
+                                        text = cat,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) BtnCreamWhite else TextDark,
+                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Memuat data produk titipan...", color = TextMuted, fontSize = 14.sp)
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("Memuat data produk titipan...", color = TextMuted, fontSize = 14.sp)
+                    }
                 }
             } else if (products.isEmpty()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .size(60.dp)
-                                .clip(CircleShape)
-                                .background(BtnMocha.copy(alpha = 0.2f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ShoppingBag,
-                                contentDescription = "Empty",
-                                tint = BtnDarkChocolate,
-                                modifier = Modifier.size(28.dp)
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(240.dp)
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Box(
+                                modifier = Modifier
+                                    .size(60.dp)
+                                    .clip(CircleShape)
+                                    .background(BtnMocha.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ShoppingBag,
+                                    contentDescription = "Empty",
+                                    tint = BtnDarkChocolate,
+                                    modifier = Modifier.size(28.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "Belum Ada Produk Titipan",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = TextDark
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Tekan tombol '+' di kanan bawah untuk menitipkan produk ke Toko PKK.",
+                                fontSize = 12.sp,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center
                             )
                         }
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "Belum Ada Produk Titipan",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp,
-                            color = TextDark
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Tekan tombol '+' di kanan bawah untuk menitipkan produk ke Toko PKK.",
-                            fontSize = 12.sp,
-                            color = TextMuted,
-                            textAlign = TextAlign.Center
-                        )
+                    }
+                }
+            } else if (filteredProducts.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .padding(24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = "Tidak Ada Produk yang Cocok",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = TextDark
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Coba ubah kata kunci pencarian atau pilih filter kategori lainnya.",
+                                fontSize = 12.sp,
+                                color = TextMuted,
+                                textAlign = TextAlign.Center
+                            )
+                        }
                     }
                 }
             } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(bottom = 80.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(products, key = { it.id }) { product ->
-                        PenitipProductCard(
-                            product = product,
-                            onDeleteProduct = { productId ->
-                                viewModel.deleteProduct(productId)
-                            }
-                        )
-                    }
+                items(filteredProducts, key = { it.id }) { product ->
+                    PenitipProductCard(
+                        product = product,
+                        onDeleteProduct = { productId ->
+                            viewModel.deleteProduct(productId)
+                        }
+                    )
                 }
             }
         }
@@ -528,8 +657,8 @@ fun PenitipDashboardScreen(
         AddProductDialog(
             isLoading = isAddLoading,
             onDismiss = { showAddDialog = false },
-            onConfirmUpload = { imageUri, name, price, desc, stock ->
-                viewModel.uploadProduct(context, imageUri, name, price, desc, stock)
+            onConfirmUpload = { imageUri, name, price, desc, stock, category ->
+                viewModel.uploadProduct(context, imageUri, name, price, desc, stock, category)
             }
         )
     }
@@ -572,7 +701,7 @@ fun PenitipProductCard(
         ) {
             ProductImage(
                 imageUrl = product.imageUrl,
-                category = product.category,
+                category = product.effectiveCategory,
                 contentDescription = product.name,
                 modifier = Modifier
                     .size(64.dp)
@@ -612,11 +741,24 @@ fun PenitipProductCard(
 
                 Spacer(modifier = Modifier.height(6.dp))
 
-                // BADGES: SISA STOK & INDIKATOR TERJUAL
+                // BADGES: KATEGORI, SISA STOK & INDIKATOR TERJUAL
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = BgWarmTan.copy(alpha = 0.6f)
+                    ) {
+                        Text(
+                            text = product.effectiveCategory,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BtnDarkChocolate,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+
                     Surface(
                         shape = RoundedCornerShape(6.dp),
                         color = GreenSuccessContainer
@@ -708,13 +850,16 @@ fun PenitipProductCard(
 fun AddProductDialog(
     isLoading: Boolean,
     onDismiss: () -> Unit,
-    onConfirmUpload: (imageUri: Uri?, name: String, price: String, desc: String, stock: String) -> Unit
+    onConfirmUpload: (imageUri: Uri?, name: String, price: String, desc: String, stock: String, category: String) -> Unit
 ) {
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var nameInput by remember { mutableStateOf("") }
+    var categoryInput by remember { mutableStateOf("Makanan") }
     var priceInput by remember { mutableStateOf("") }
     var descInput by remember { mutableStateOf("") }
     var stockInput by remember { mutableStateOf("") }
+
+    val categoryOptions = remember { listOf("Makanan", "Minuman", "Snack", "Paket") }
 
     val photoPicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
@@ -725,12 +870,36 @@ fun AddProductDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                text = "Tambah Produk Titipan",
-                fontWeight = FontWeight.Bold,
-                fontSize = 17.sp,
-                color = TextDark
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(BtnMocha.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Category,
+                        contentDescription = "Produk Titipan",
+                        tint = BtnDarkChocolate,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Text(
+                        text = "Tambah Produk Titipan",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 17.sp,
+                        color = TextDark
+                    )
+                    Text(
+                        text = "Isi detail makanan & kategori menu",
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+                }
+            }
         },
         text = {
             Column(
@@ -774,7 +943,7 @@ fun AddProductDialog(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (selectedImageUri != null) "Ganti Foto Makanan" else "Pilih Foto Makanan",
+                        text = if (selectedImageUri != null) "Ganti Foto Makanan" else "Pilih Foto Makanan (Opsional)",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         color = BtnDarkChocolate
@@ -788,6 +957,49 @@ fun AddProductDialog(
                     placeholder = "Contoh: Nasi Goreng Spesial"
                 )
 
+                // DROPDOWN KATEGORI PRODUK & PRESET CHIPS
+                SipekaDropdownField(
+                    options = categoryOptions,
+                    selectedOption = categoryInput,
+                    onOptionSelected = { categoryInput = it },
+                    label = "Kategori Produk",
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Category,
+                            contentDescription = "Kategori",
+                            tint = BtnDarkChocolate,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                )
+
+                // Quick Category Chips
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    categoryOptions.forEach { cat ->
+                        val isSelected = categoryInput.equals(cat, ignoreCase = true)
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
+                            border = BorderStroke(1.dp, if (isSelected) BtnDarkChocolate else OutlineWarm.copy(alpha = 0.6f)),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { categoryInput = cat }
+                        ) {
+                            Text(
+                                text = cat,
+                                fontSize = 11.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) BtnCreamWhite else TextDark,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+
                 SipekaTextField(
                     value = priceInput,
                     onValueChange = { priceInput = it.filter { char -> char.isDigit() } },
@@ -795,6 +1007,19 @@ fun AddProductDialog(
                     placeholder = "Contoh: 15000",
                     keyboardType = KeyboardType.Number
                 )
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = BgWarmTan.copy(alpha = 0.4f),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "💡 Margin kas PKK sekolah adalah Rp 1.000 per porsi. Pendapatan bersih Anda = (Harga Jual - Rp 1.000) × Terjual.",
+                        fontSize = 11.sp,
+                        color = BtnDarkChocolate,
+                        modifier = Modifier.padding(8.dp)
+                    )
+                }
 
                 SipekaTextField(
                     value = descInput,
@@ -823,7 +1048,8 @@ fun AddProductDialog(
                         nameInput,
                         priceInput,
                         descInput,
-                        stockInput
+                        stockInput,
+                        categoryInput
                     )
                 }
             )

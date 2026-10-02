@@ -46,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.enableEdgeToEdge
 import com.smkn8jkt.sipeka.data.remote.ApiClient
 import com.smkn8jkt.sipeka.data.remote.TokenManager
 import com.smkn8jkt.sipeka.navigation.AppNavigation
@@ -58,6 +59,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var tokenManager: TokenManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         tokenManager = TokenManager(applicationContext)

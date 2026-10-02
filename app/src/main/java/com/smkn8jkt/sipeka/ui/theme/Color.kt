@@ -54,3 +54,4 @@ val SecondaryBrown = BgDarkEspresso
 val TertiaryBrown = BtnMocha
 val PrimaryOrange = BtnMocha
 val DarkBrown = BtnDarkChocolate
+val VibrantOrange = Color(0xFFF95721)

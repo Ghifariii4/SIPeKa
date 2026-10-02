@@ -66,6 +66,13 @@ dependencies {
     implementation("com.google.code.gson:gson:2.11.0")
     implementation("com.google.zxing:core:3.5.3")
 
+    // CameraX for in-app Live Scanner Popup
+    val cameraxVersion = "1.4.1"
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

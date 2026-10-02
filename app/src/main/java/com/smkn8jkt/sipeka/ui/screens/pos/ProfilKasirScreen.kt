@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -242,6 +243,7 @@ fun ProfilKasirScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .statusBarsPadding()
                         .padding(horizontal = 16.dp, vertical = 12.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -302,8 +304,7 @@ fun ProfilKasirScreen(
         bottomBar = {
             NavigationBar(
                 containerColor = CardCreamWhite,
-                tonalElevation = 8.dp,
-                modifier = Modifier.height(64.dp)
+                tonalElevation = 8.dp
             ) {
                 NavigationBarItem(
                     selected = false,
@@ -734,7 +735,7 @@ fun ProfilKasirScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(36.dp))
         }
     }
 
@@ -755,7 +756,11 @@ fun ProfilKasirScreen(
                 )
             },
             text = {
-                Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                ) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(containerColor = BgWarmTan.copy(alpha = 0.35f))

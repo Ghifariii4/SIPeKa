@@ -264,7 +264,11 @@ class TokenManager(private val context: Context) {
         }
     }
 
-    suspend fun completeSharedOrder(orderIdOrQr: String, kasirName: String): Pair<Boolean, String> {
+    suspend fun completeSharedOrder(
+        orderIdOrQr: String, 
+        kasirName: String, 
+        shiftId: String? = null
+    ): Pair<Boolean, String> {
         var resultPair = Pair(false, "Pesanan tidak ditemukan.")
         val nowIso = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
 
@@ -291,11 +295,15 @@ class TokenManager(private val context: Context) {
                 if (existing.isCompleted) {
                     // KEAMANAN TINGKAT TINGGI: Cegah pengambilan ganda (Anti-Jahil)
                     resultPair = Pair(false, "⛔ PERINGATAN KEAMANAN: Pesanan #${existing.id?.take(8)} atas nama ${existing.displayCustomerName} SUDAH PERNAH DIAMBIL sebelumnya! Tolong jangan serahkan makanan ganda.")
+                } else if (existing.isCancelled) {
+                    resultPair = Pair(false, "⚠️ Pesanan #${existing.id?.take(8)} telah dibatalkan oleh siswa.")
                 } else {
+                    val finalShiftId = if (!shiftId.isNullOrBlank()) shiftId else existing.shiftId
                     val updated = existing.copy(
                         status = "COMPLETED",
                         completedAt = nowIso,
-                        kasirName = kasirName
+                        kasirName = kasirName,
+                        shiftId = finalShiftId
                     )
                     currentList[index] = updated
                     preferences[SHARED_ORDERS_KEY] = gson.toJson(currentList)
@@ -306,6 +314,45 @@ class TokenManager(private val context: Context) {
             }
         }
 
+        return resultPair
+    }
+
+    suspend fun cancelSharedOrder(orderIdOrQr: String): Pair<Boolean, String> {
+        var resultPair = Pair(false, "Pesanan tidak ditemukan.")
+        context.dataStore.edit { preferences ->
+            val json = preferences[SHARED_ORDERS_KEY]
+            val currentList = if (!json.isNullOrBlank()) {
+                try {
+                    val type = object : TypeToken<List<OrderData>>() {}.type
+                    gson.fromJson<List<OrderData>>(json, type)?.toMutableList() ?: mutableListOf()
+                } catch (_: Exception) {
+                    mutableListOf()
+                }
+            } else {
+                mutableListOf()
+            }
+
+            val index = currentList.indexOfFirst {
+                (it.id != null && it.id.equals(orderIdOrQr, ignoreCase = true)) ||
+                (it.qrCode != null && it.qrCode.equals(orderIdOrQr, ignoreCase = true))
+            }
+
+            if (index >= 0) {
+                val existing = currentList[index]
+                if (existing.isCompleted) {
+                    resultPair = Pair(false, "Pesanan sudah selesai diserahkan dan tidak dapat dibatalkan.")
+                } else if (existing.isCancelled) {
+                    resultPair = Pair(false, "Pesanan ini sudah dibatalkan sebelumnya.")
+                } else {
+                    val updated = existing.copy(status = "CANCELLED")
+                    currentList[index] = updated
+                    preferences[SHARED_ORDERS_KEY] = gson.toJson(currentList)
+                    resultPair = Pair(true, "Pesanan berhasil dibatalkan.")
+                }
+            } else {
+                resultPair = Pair(false, "Pesanan tidak ditemukan.")
+            }
+        }
         return resultPair
     }
 

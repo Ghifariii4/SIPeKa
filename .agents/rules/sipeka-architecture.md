@@ -22,6 +22,8 @@ Setiap AI Agent yang beroperasi pada repositori ini harus mematuhi panduan dan b
 - **Clock-In Enforcement**: Kasir tidak boleh diizinkan menyerahkan makanan jika shift kasir belum dibuka (`isShiftOpen == false`).
 - **Verifikasi Identitas Lisan**: Kasir harus selalu diperlihatkan Nama Siswa, Kelas, dan NISN untuk mencocokkan identitas siswa di depan konter.
 - **Validasi Stok**: Pembeli tidak boleh dapat memesan item yang stoknya habis (`<= 0`) atau memilih kuantitas melebihi stok yang ada.
+- **Pemindai Kamera & Galeri QR**: Kasir dilengkapi pemindai kamera otomatis dan import galeri (`QrCodeUtil.decodeQrFromBitmap`) untuk mempercepat verifikasi tiket siswa secara langsung.
+- **Proteksi Celah Finansial Penitip**: Harga produk penitip wajib > Rp 1.000 (biaya margin kas sekolah PKK) agar saldo penitip tidak minus.
 
 ## 4. Hak Edit Profil Mandiri
 - Seluruh peran pengguna berhak mengedit data akun mereka sendiri melalui UI khusus di masing-masing modul:
