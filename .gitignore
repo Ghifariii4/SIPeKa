@@ -87,3 +87,6 @@ Thumbs.db
 *~
 *.swp
 *.bak
+
+# Backend workspace copy (tracked in separate repository Ghifariii4/Backend-SIPeKa)
+backend/

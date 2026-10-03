@@ -278,11 +278,6 @@ class PosViewModel(
             return
         }
 
-        if (!_isShiftOpen.value) {
-            _qrScanMessage.value = "⛔ Shift kasir belum dibuka! Harap Clock-In shift terlebih dahulu sebelum melayani penyerahan pesanan."
-            return
-        }
-
         viewModelScope.launch {
             _isDetailLoading.value = true
             _qrScanMessage.value = null
@@ -291,16 +286,30 @@ class PosViewModel(
                 val currentKasir = tokenManager?.getKasirNameSync() ?: "Petugas Kasir 1"
                 val activeShiftId = _currentShiftData.value?.id ?: "SHIFT-ACTIVE"
 
-                // 1. Eksekusi verifikasi anti-fraud di sistem penyimpanan bersama dengan menyematkan shiftId aktif
-                val (success, message) = tokenManager?.completeSharedOrder(cleanQuery, currentKasir, activeShiftId)
+                // 1. Kirim verifikasi ke endpoint backend PUT /api/v1/pos/scan/:qr_code
+                var backendMsg: String? = null
+                var isBackendSuccess = false
+                try {
+                    val response = apiService.scanQrCode(cleanQuery)
+                    if (response.isSuccessful) {
+                        isBackendSuccess = true
+                        backendMsg = response.body()?.message ?: "Pesanan pre-order berhasil diverifikasi dan diserahkan!"
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+                        if (!errorBody.isNullOrBlank()) {
+                            val json = org.json.JSONObject(errorBody)
+                            backendMsg = if (json.has("message")) json.getString("message") else null
+                        }
+                    }
+                } catch (_: Exception) {
+                    // Jika offline/jaringan terkendala, lanjutkan pengecekan lokal
+                }
+
+                // 2. Eksekusi verifikasi anti-fraud di sistem penyimpanan bersama dengan menyematkan shiftId aktif
+                val (success, localMessage) = tokenManager?.completeSharedOrder(cleanQuery, currentKasir, activeShiftId)
                     ?: Pair(false, "Sistem penyimpanan pesanan tidak dapat diakses.")
 
-                // 2. Kirim update ke endpoint backend jika terhubung
-                try {
-                    apiService.scanQrCode(cleanQuery)
-                } catch (_: Exception) {}
-
-                _qrScanMessage.value = message
+                _qrScanMessage.value = backendMsg ?: localMessage
                 fetchHistory()
                 fetchProducts() // Update ketersediaan stok
             } catch (e: Exception) {
@@ -489,20 +498,29 @@ class PosViewModel(
                     }
                 )
 
-                var serverSuccess = false
-                try {
-                    val response = apiService.createTransaction(request)
-                    serverSuccess = response.isSuccessful
-                } catch (_: Exception) {}
-
-                // Simpan transaksi kasir langsung ke shared orders agar seketika masuk riwayat kasir & rekap shift
-                tokenManager?.saveSharedOrder(cashOrder)
-                _cartItems.value = emptyList()
-                _checkoutSuccess.value = true
-                fetchHistory()
-                fetchProducts()
+                val response = apiService.createTransaction(request)
+                if (response.isSuccessful) {
+                    // Simpan transaksi kasir langsung ke shared orders agar seketika masuk riwayat kasir & rekap shift
+                    tokenManager?.saveSharedOrder(cashOrder)
+                    _cartItems.value = emptyList()
+                    _checkoutSuccess.value = true
+                    fetchHistory()
+                    fetchProducts()
+                } else {
+                    val errorMsg = try {
+                        val errorBody = response.errorBody()?.string()
+                        if (!errorBody.isNullOrBlank()) {
+                            org.json.JSONObject(errorBody).optString("message", "Gagal memproses transaksi kasir.")
+                        } else {
+                            "Gagal memproses transaksi kasir (HTTP ${response.code()})."
+                        }
+                    } catch (_: Exception) {
+                        "Gagal memproses transaksi kasir (HTTP ${response.code()})."
+                    }
+                    _errorMessage.value = errorMsg
+                }
             } catch (e: Exception) {
-                _errorMessage.value = e.localizedMessage ?: "Terjadi kesalahan memproses pesanan"
+                _errorMessage.value = "Koneksi bermasalah: ${e.localizedMessage ?: "Terjadi kesalahan memproses pesanan."}"
             } finally {
                 _isCheckoutLoading.value = false
             }

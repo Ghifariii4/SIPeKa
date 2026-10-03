@@ -211,26 +211,12 @@ class PembeliViewModel(
     }
 
     // --- CHECKOUT PRE-ORDER ---
+    // --- CHECKOUT PRE-ORDER (VALIDASI DILAKUKAN PENUH DI BACKEND) ---
     fun checkoutPreOrder() {
         val items = _cartItems.value
         if (items.isEmpty()) {
             _errorMessage.value = "Keranjang belanja Anda masih kosong."
             return
-        }
-
-        // KEAMANAN & ANTI-JAHIL: Validasi stok sebelum checkout
-        for (item in items) {
-            val currentProduct = _products.value.find { it.id == item.product.id }
-            if (currentProduct != null) {
-                if (currentProduct.stock <= 0) {
-                    _errorMessage.value = "Maaf, menu '${currentProduct.name}' saat ini sudah habis."
-                    return
-                }
-                if (item.quantity > currentProduct.stock) {
-                    _errorMessage.value = "Jumlah pesanan '${currentProduct.name}' (${item.quantity}) melebihi stok tersedia (${currentProduct.stock})."
-                    return
-                }
-            }
         }
 
         viewModelScope.launch {
@@ -257,70 +243,46 @@ class PembeliViewModel(
                     orderType = "PRE-ORDER"
                 )
 
-                val itemsSnapshot = items.map {
-                    OrderItemData(
-                        id = UUID.randomUUID().toString(),
-                        productId = it.product.id,
-                        productName = it.product.name,
-                        price = it.product.price,
-                        quantity = it.quantity
+                // Panggil endpoint backend POST /api/v1/orders
+                val response = apiService.createOrder(request)
+
+                if (response.isSuccessful && response.body()?.data != null) {
+                    val serverOrder = response.body()!!.data!!
+                    val finalTicket = serverOrder.copy(
+                        customerName = currentName,
+                        customerClass = currentClass,
+                        customerNisn = currentNisn
                     )
-                }
-                val totalAmountSnapshot = items.sumOf { it.subtotal }
 
-                // Panggil endpoint transaksi
-                try {
-                    apiService.createOrder(request)
-                } catch (_: Exception) {
-                    apiService.createTransaction(request)
-                }
+                    // Simpan ke shared bus agar kasir langsung melihat tiket di antrean kasir secara real-time
+                    tokenManager?.saveSharedOrder(finalTicket)
 
-                val nowIso = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
-                val generatedOrderId = UUID.randomUUID().toString()
-                val shortCode = generatedOrderId.take(8).uppercase()
-                val qrCodeString = "QR-PREORDER-$shortCode"
+                    // Simpan ID & QR ke set pesanan akun siswa
+                    finalTicket.id?.let { tokenManager?.saveUserOrder(it) }
+                    finalTicket.qrCode?.let { tokenManager?.saveUserOrder(it) }
 
-                val ticketOrder = OrderData(
-                    id = generatedOrderId,
-                    pembeliId = currentUserId,
-                    userId = currentUserId,
-                    userName = currentName,
-                    customerName = currentName,
-                    customerClass = currentClass,
-                    customerNisn = currentNisn,
-                    qrCode = qrCodeString,
-                    totalAmount = totalAmountSnapshot,
-                    orderType = "PRE-ORDER",
-                    status = "PENDING",
-                    createdAt = nowIso,
-                    items = itemsSnapshot
-                )
+                    _activeTicketOrder.value = finalTicket
+                    _cartItems.value = emptyList()
 
-                // Simpan ke shared orders agar Kasir langsung melihat pesanan siswa di antrean kasir!
-                tokenManager?.saveSharedOrder(ticketOrder)
-
-                // Simpan id order ke local set akun ini agar selalu konsisten
-                tokenManager?.saveUserOrder(generatedOrderId)
-                tokenManager?.saveUserOrder(qrCodeString)
-
-                // Update stok lokal agar katalog langsung berkurang secara instan
-                val currentProds = _products.value.toMutableList()
-                items.forEach { cartItem ->
-                    val pIndex = currentProds.indexOfFirst { it.id == cartItem.product.id }
-                    if (pIndex >= 0) {
-                        val oldP = currentProds[pIndex]
-                        currentProds[pIndex] = oldP.copy(stock = (oldP.stock - cartItem.quantity).coerceAtLeast(0))
+                    // Refresh katalog stok terkini dan riwayat pesanan
+                    fetchProducts()
+                    fetchMyOrders()
+                } else {
+                    // Tangkap pesan validasi terpusat dari backend
+                    val errorMsg = try {
+                        val errorBody = response.errorBody()?.string()
+                        if (!errorBody.isNullOrBlank()) {
+                            org.json.JSONObject(errorBody).optString("message", "Gagal membuat pesanan pre-order.")
+                        } else {
+                            "Gagal membuat pesanan pre-order (HTTP ${response.code()})."
+                        }
+                    } catch (_: Exception) {
+                        "Gagal membuat pesanan pre-order (HTTP ${response.code()})."
                     }
+                    _errorMessage.value = errorMsg
                 }
-                _products.value = currentProds
-
-                _activeTicketOrder.value = ticketOrder
-                _cartItems.value = emptyList()
-
-                _myOrders.value = listOf(ticketOrder) + _myOrders.value
-                fetchMyOrders()
             } catch (e: Exception) {
-                _errorMessage.value = e.localizedMessage ?: "Gagal membuat pesanan pre-order"
+                _errorMessage.value = "Koneksi bermasalah: ${e.localizedMessage ?: "Tidak dapat menghubungi server kantin."}"
             } finally {
                 _isCheckoutLoading.value = false
             }

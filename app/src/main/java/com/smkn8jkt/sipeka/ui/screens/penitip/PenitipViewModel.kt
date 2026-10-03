@@ -152,26 +152,13 @@ class PenitipViewModel(
         val stockVal = stock.toIntOrNull() ?: 0
         val cleanCategory = if (category.isBlank()) "Makanan" else category.trim()
 
-        if (cleanName.isBlank()) {
-            _errorMessage.value = "Nama produk wajib diisi."
-            return
-        }
-        if (priceVal <= 1000) {
-            _errorMessage.value = "Harga jual harus lebih dari Rp 1.000 (karena margin operasional kas sekolah adalah Rp 1.000 per porsi)."
-            return
-        }
-        if (stockVal <= 0) {
-            _errorMessage.value = "Stok produk harus lebih dari 0."
-            return
-        }
-
         viewModelScope.launch {
             _isAddLoading.value = true
             _errorMessage.value = null
             _isAddSuccess.value = false
 
             try {
-                // 1. Konversi Uri gambar menjadi MultipartBody.Part
+                // 1. Konversi Uri gambar menjadi MultipartBody.Part (jika ada)
                 var imagePart: MultipartBody.Part? = null
                 if (imageUri != null) {
                     try {
@@ -212,17 +199,25 @@ class PenitipViewModel(
 
                 if (response.isSuccessful) {
                     _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
+                    _successMessage.value = response.body()?.message ?: "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
                     fetchDashboard()
                 } else {
-                    _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
-                    fetchDashboard()
+                    val errorMsg = try {
+                        val errorBody = response.errorBody()?.string()
+                        if (!errorBody.isNullOrBlank()) {
+                            org.json.JSONObject(errorBody).optString("message", "Gagal menambahkan produk.")
+                        } else {
+                            "Gagal menambahkan produk (HTTP ${response.code()})."
+                        }
+                    } catch (_: Exception) {
+                        "Gagal menambahkan produk (HTTP ${response.code()})."
+                    }
+                    _errorMessage.value = errorMsg
+                    _isAddSuccess.value = false
                 }
             } catch (e: Exception) {
-                _isAddSuccess.value = true
-                _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
-                fetchDashboard()
+                _errorMessage.value = "Koneksi bermasalah: ${e.localizedMessage ?: "Tidak dapat menghubungi server."}"
+                _isAddSuccess.value = false
             } finally {
                 _isAddLoading.value = false
             }
@@ -232,18 +227,6 @@ class PenitipViewModel(
     fun addProduct(name: String, price: Double, stock: Int, category: String = "Makanan") {
         val cleanName = name.trim()
         val cleanCategory = if (category.isBlank()) "Makanan" else category.trim()
-        if (cleanName.isBlank()) {
-            _errorMessage.value = "Nama produk wajib diisi."
-            return
-        }
-        if (price <= 0) {
-            _errorMessage.value = "Harga produk harus lebih dari Rp 0."
-            return
-        }
-        if (stock <= 0) {
-            _errorMessage.value = "Stok produk harus lebih dari 0."
-            return
-        }
 
         viewModelScope.launch {
             _isAddLoading.value = true
@@ -261,17 +244,25 @@ class PenitipViewModel(
                 val response = apiService.addProduct(request)
                 if (response.isSuccessful) {
                     _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan ke Toko PKK!"
+                    _successMessage.value = response.body()?.message ?: "Produk '$cleanName' ($cleanCategory) berhasil dititipkan ke Toko PKK!"
                     fetchDashboard()
                 } else {
-                    _isAddSuccess.value = true
-                    _successMessage.value = "Produk '$cleanName' ($cleanCategory) berhasil dititipkan!"
-                    fetchDashboard()
+                    val errorMsg = try {
+                        val errorBody = response.errorBody()?.string()
+                        if (!errorBody.isNullOrBlank()) {
+                            org.json.JSONObject(errorBody).optString("message", "Gagal menambahkan produk.")
+                        } else {
+                            "Gagal menambahkan produk (HTTP ${response.code()})."
+                        }
+                    } catch (_: Exception) {
+                        "Gagal menambahkan produk (HTTP ${response.code()})."
+                    }
+                    _errorMessage.value = errorMsg
+                    _isAddSuccess.value = false
                 }
             } catch (e: Exception) {
-                _isAddSuccess.value = true
-                _successMessage.value = "Produk '$cleanName' berhasil dititipkan!"
-                fetchDashboard()
+                _errorMessage.value = "Koneksi bermasalah: ${e.localizedMessage ?: "Tidak dapat menghubungi server."}"
+                _isAddSuccess.value = false
             } finally {
                 _isAddLoading.value = false
             }

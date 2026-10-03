@@ -93,7 +93,7 @@ interface ApiService {
     @POST("orders")
     suspend fun createOrder(
         @Body request: OrderRequest
-    ): Response<BaseResponse<Any>>
+    ): Response<BaseResponse<OrderData>>
 
     // Admin (Manajemen User & Pendaftaran)
     @GET("admin/users")

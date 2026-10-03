@@ -161,6 +161,7 @@ data class OrderData(
     @SerializedName("customer_class") val customerClass: String? = null,
     @SerializedName("customer_nisn") val customerNisn: String? = null,
     @SerializedName("user") val user: UserData? = null,
+    @SerializedName("pembeli") val pembeli: UserData? = null,
     @SerializedName("shift_id") val shiftId: String? = null,
     @SerializedName("kasir_name") val kasirName: String? = null,
     @SerializedName("qr_code") val qrCode: String? = null,
@@ -178,10 +179,13 @@ data class OrderData(
         get() = createdAt ?: createdAtAlt ?: ""
 
     val displayCustomerName: String
-        get() = customerName ?: userName ?: user?.name ?: "Siswa SMKN 8"
+        get() = customerName ?: userName ?: user?.name ?: pembeli?.name ?: "Siswa SMKN 8"
 
     val displayCustomerClass: String
-        get() = customerClass ?: user?.kelas ?: "XII RPL"
+        get() = customerClass ?: user?.kelas ?: pembeli?.kelas ?: "XII RPL"
+
+    val displayCustomerNisn: String
+        get() = customerNisn ?: user?.nisnNip ?: pembeli?.nisnNip ?: "-"
 
     val displayItems: List<OrderItemData>
         get() = items ?: orderItems ?: orderItemsSnake ?: emptyList()
