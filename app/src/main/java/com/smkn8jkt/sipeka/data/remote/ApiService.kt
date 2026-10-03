@@ -114,6 +114,11 @@ interface ApiService {
         @Path("id") id: String
     ): Response<BaseResponse<UserData>>
 
+    @PUT("auth/profile")
+    suspend fun updateProfile(
+        @Body request: UserData
+    ): Response<BaseResponse<UserData>>
+
     @PUT("admin/users/{id}")
     suspend fun updateUser(
         @Path("id") id: String,

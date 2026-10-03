@@ -421,8 +421,54 @@ class PembeliViewModel(
 
             try {
                 val currentId = tokenManager?.getUserIdSync()
+                val updatePayload = UserData(
+                    id = currentId,
+                    name = cleanName,
+                    nisnNip = cleanNisn,
+                    kelas = cleanKelas,
+                    password = if (!cleanPassword.isNullOrBlank()) cleanPassword else null,
+                    role = "pembeli"
+                )
 
-                // Simpan perubahan ke DataStore secara persisten
+                // 1. Kirim pembaruan ke server backend
+                var serverMessage: String? = null
+
+                try {
+                    val response = apiService.updateProfile(updatePayload)
+                    if (response.isSuccessful) {
+                        serverMessage = response.body()?.message
+                        val serverUser = response.body()?.data
+                        tokenManager?.saveUserProfile(
+                            id = serverUser?.id ?: currentId,
+                            name = serverUser?.name ?: cleanName,
+                            nisn = serverUser?.nisnNip ?: cleanNisn,
+                            kelas = serverUser?.kelas ?: cleanKelas
+                        )
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+                        val errMsg = if (!errorBody.isNullOrBlank()) {
+                            try {
+                                val json = org.json.JSONObject(errorBody)
+                                if (json.has("message")) json.getString("message") else null
+                            } catch (_: Exception) { null }
+                        } else null
+
+                        _errorMessage.value = errMsg ?: "Gagal memperbarui profil di server (HTTP ${response.code()})."
+                        return@launch
+                    }
+                } catch (netEx: Exception) {
+                    // Fallback jika ada kendala koneksi spesifik
+                    if (!currentId.isNullOrBlank()) {
+                        try {
+                            val altResp = apiService.updateUser(currentId, updatePayload)
+                            if (altResp.isSuccessful) {
+                                serverMessage = altResp.body()?.message
+                            }
+                        } catch (_: Exception) {}
+                    }
+                }
+
+                // 2. Simpan perubahan ke DataStore secara persisten
                 tokenManager?.saveUserProfile(
                     id = currentId,
                     name = cleanName,
@@ -430,24 +476,7 @@ class PembeliViewModel(
                     kelas = cleanKelas
                 )
 
-                // Jika terhubung ke server dan memiliki ID akun, coba kirim ke server
-                if (!currentId.isNullOrBlank()) {
-                    try {
-                        val updatePayload = UserData(
-                            id = currentId,
-                            name = cleanName,
-                            nisnNip = cleanNisn,
-                            kelas = cleanKelas,
-                            password = if (!cleanPassword.isNullOrBlank()) cleanPassword else null,
-                            role = "pembeli"
-                        )
-                        apiService.updateUser(currentId, updatePayload)
-                    } catch (_: Exception) {
-                        // Perubahan lokal tetap tersimpan di device
-                    }
-                }
-
-                _updateProfileSuccess.value = "Informasi akun Anda berhasil diperbarui!"
+                _updateProfileSuccess.value = serverMessage ?: "Informasi akun Anda berhasil diperbarui!"
             } catch (e: Exception) {
                 _errorMessage.value = "Gagal memperbarui profil: ${e.localizedMessage}"
             } finally {

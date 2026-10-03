@@ -91,6 +91,14 @@ class AuthViewModel(
                             userName = userData?.name,
                             userNisn = userData?.nisnNip ?: cleanNisnNip
                         )
+                        if (!userData?.kelas.isNullOrBlank()) {
+                            tokenManager.saveUserProfile(
+                                id = userData?.id,
+                                name = userData?.name,
+                                nisn = userData?.nisnNip ?: cleanNisnNip,
+                                kelas = userData?.kelas
+                            )
+                        }
                     }
                     _loginSuccess.value = true
                 } else {

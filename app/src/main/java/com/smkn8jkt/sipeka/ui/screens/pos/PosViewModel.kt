@@ -350,23 +350,52 @@ class PosViewModel(
 
             try {
                 val currentId = tokenManager?.getUserIdSync()
+                val updatePayload = com.smkn8jkt.sipeka.data.model.UserData(
+                    id = currentId,
+                    name = cleanName,
+                    nisnNip = cleanNip,
+                    password = if (!cleanPw.isNullOrBlank()) cleanPw else null,
+                    role = "kasir"
+                )
+
+                var serverMessage: String? = null
+
+                try {
+                    val response = apiService.updateProfile(updatePayload)
+                    if (response.isSuccessful) {
+                        serverMessage = response.body()?.message
+                        val serverUser = response.body()?.data
+                        tokenManager?.saveKasirProfile(serverUser?.name ?: cleanName, serverUser?.nisnNip ?: cleanNip)
+                        tokenManager?.saveUserProfile(
+                            id = serverUser?.id ?: currentId,
+                            name = serverUser?.name ?: cleanName,
+                            nisn = serverUser?.nisnNip ?: cleanNip
+                        )
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+                        val errMsg = if (!errorBody.isNullOrBlank()) {
+                            try {
+                                val json = org.json.JSONObject(errorBody)
+                                if (json.has("message")) json.getString("message") else null
+                            } catch (_: Exception) { null }
+                        } else null
+
+                        _errorMessage.value = errMsg ?: "Gagal memperbarui profil di server (HTTP ${response.code()})."
+                        return@launch
+                    }
+                } catch (netEx: Exception) {
+                    if (!currentId.isNullOrBlank()) {
+                        try {
+                            val altResp = apiService.updateUser(currentId, updatePayload)
+                            if (altResp.isSuccessful) serverMessage = altResp.body()?.message
+                        } catch (_: Exception) {}
+                    }
+                }
+
                 tokenManager?.saveKasirProfile(cleanName, cleanNip)
                 tokenManager?.saveUserProfile(id = currentId, name = cleanName, nisn = cleanNip)
 
-                if (!currentId.isNullOrBlank()) {
-                    try {
-                        val updatePayload = com.smkn8jkt.sipeka.data.model.UserData(
-                            id = currentId,
-                            name = cleanName,
-                            nisnNip = cleanNip,
-                            password = if (!cleanPw.isNullOrBlank()) cleanPw else null,
-                            role = "kasir"
-                        )
-                        apiService.updateUser(currentId, updatePayload)
-                    } catch (_: Exception) {}
-                }
-
-                _updateProfileSuccess.value = "Informasi akun kasir berhasil diperbarui!"
+                _updateProfileSuccess.value = serverMessage ?: "Informasi akun kasir berhasil diperbarui!"
             } catch (e: Exception) {
                 _errorMessage.value = "Gagal memperbarui profil: ${e.localizedMessage}"
             } finally {

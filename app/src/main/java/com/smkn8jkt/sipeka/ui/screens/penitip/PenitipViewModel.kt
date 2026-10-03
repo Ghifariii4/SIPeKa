@@ -373,20 +373,48 @@ class PenitipViewModel(
                 tokenManager?.savePenitipProfile(cleanName, cleanNip.ifBlank { null }, cleanShop.ifBlank { null })
 
                 val currentId = tokenManager?.getUserIdSync()
-                if (!currentId.isNullOrBlank()) {
-                    try {
-                        val updatePayload = UserData(
-                            id = currentId,
-                            name = cleanName,
-                            nisnNip = if (cleanNip.isNotBlank()) cleanNip else null,
-                            password = if (!cleanPw.isNullOrBlank()) cleanPw else null,
-                            role = "penitip"
+                val updatePayload = UserData(
+                    id = currentId,
+                    name = cleanName,
+                    nisnNip = if (cleanNip.isNotBlank()) cleanNip else null,
+                    password = if (!cleanPw.isNullOrBlank()) cleanPw else null,
+                    role = "penitip"
+                )
+
+                var serverMessage: String? = null
+
+                try {
+                    val response = apiService.updateProfile(updatePayload)
+                    if (response.isSuccessful) {
+                        serverMessage = response.body()?.message
+                        val serverUser = response.body()?.data
+                        tokenManager?.saveUserProfile(
+                            id = serverUser?.id ?: currentId,
+                            name = serverUser?.name ?: cleanName,
+                            nisn = serverUser?.nisnNip ?: cleanNip
                         )
-                        apiService.updateUser(currentId, updatePayload)
-                    } catch (_: Exception) {}
+                    } else {
+                        val errorBody = response.errorBody()?.string()
+                        val errMsg = if (!errorBody.isNullOrBlank()) {
+                            try {
+                                val json = org.json.JSONObject(errorBody)
+                                if (json.has("message")) json.getString("message") else null
+                            } catch (_: Exception) { null }
+                        } else null
+
+                        _errorMessage.value = errMsg ?: "Gagal memperbarui profil di server (HTTP ${response.code()})."
+                        return@launch
+                    }
+                } catch (netEx: Exception) {
+                    if (!currentId.isNullOrBlank()) {
+                        try {
+                            val altResp = apiService.updateUser(currentId, updatePayload)
+                            if (altResp.isSuccessful) serverMessage = altResp.body()?.message
+                        } catch (_: Exception) {}
+                    }
                 }
 
-                _updateProfileSuccess.value = "Informasi akun penitip berhasil diperbarui!"
+                _updateProfileSuccess.value = serverMessage ?: "Informasi akun penitip berhasil diperbarui!"
             } catch (e: Exception) {
                 _errorMessage.value = "Gagal memperbarui profil: ${e.localizedMessage}"
             } finally {
