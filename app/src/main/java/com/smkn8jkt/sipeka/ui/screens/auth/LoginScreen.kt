@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -140,20 +142,21 @@ fun LoginScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .background(BgLightCanvas)
-            .safeDrawingPadding(),
+            .safeDrawingPadding()
+            .imePadding(),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(16.dp)
                 .scale(cardScale.value)
                 .alpha(cardAlpha.value)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Floating Card Container (Clean White with Border & Shadow)
+            // Floating Card Container (Clean White with Border & Flat Bento Elevation)
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -161,7 +164,7 @@ fun LoginScreenContent(
                     containerColor = CardCreamWhite
                 ),
                 border = BorderStroke(1.dp, BorderStitch),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -169,12 +172,12 @@ fun LoginScreenContent(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Logo Container - Bright Pure White & Elevated (Tidak Samar!)
+                    // Logo Container - Bright Pure White & Elevated Flat
                     Surface(
-                        modifier = Modifier.size(84.dp),
+                        modifier = Modifier.size(80.dp),
                         shape = CircleShape,
                         color = Color.White,
-                        shadowElevation = 6.dp,
+                        shadowElevation = 2.dp,
                         border = BorderStroke(2.dp, BorderStitch)
                     ) {
                         Box(
@@ -206,7 +209,7 @@ fun LoginScreenContent(
 
                     Text(
                         text = "Masuk ke Sistem Informasi PKK SMKN 8",
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextMuted,
                         textAlign = TextAlign.Center
@@ -247,21 +250,23 @@ fun LoginScreenContent(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     TextButton(
                         onClick = onNavigateToRegister,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .defaultMinSize(minHeight = 48.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "Belum punya akun? ",
-                                fontSize = 13.sp,
+                                fontSize = 14.sp,
                                 color = TextMuted
                             )
                             Text(
                                 text = "Daftar Sekarang",
-                                fontSize = 13.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BtnDarkChocolate
                             )
@@ -273,7 +278,7 @@ fun LoginScreenContent(
                         Text(
                             text = errorMessage,
                             color = MaterialTheme.colorScheme.error,
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()
@@ -294,11 +299,13 @@ fun LoginScreenContent(
                         onClick = {
                             Toast.makeText(context, "Silakan hubungi Guru Pembina untuk reset password", Toast.LENGTH_LONG).show()
                         },
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .defaultMinSize(minHeight = 48.dp)
                     ) {
                         Text(
                             text = "Lupa Password?",
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             color = TextMuted,
                             fontWeight = FontWeight.Medium
                         )

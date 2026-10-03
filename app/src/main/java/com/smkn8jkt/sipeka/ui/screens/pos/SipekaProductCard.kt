@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -184,7 +185,7 @@ fun SipekaProductCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp)
+                .padding(8.dp)
         ) {
             // Thumbnail Container 4:3 dengan Badge Stok Overlaid
             Box(
@@ -203,7 +204,7 @@ fun SipekaProductCard(
 
                 // Stock Badge Pill (Top-Left seperti stitch mockup)
                 Surface(
-                    shape = RoundedCornerShape(6.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = when {
                         isOutOfStock -> RedError
                         product.stock <= 3 -> AmberWarning
@@ -211,7 +212,7 @@ fun SipekaProductCard(
                     },
                     modifier = Modifier
                         .align(Alignment.TopStart)
-                        .padding(6.dp)
+                        .padding(4.dp)
                 ) {
                     Text(
                         text = when {
@@ -219,10 +220,10 @@ fun SipekaProductCard(
                             product.stock <= 3 -> "Sisa ${product.stock} (Kritis)"
                             else -> "Sisa ${product.stock}"
                         },
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = BtnCreamWhite,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
@@ -232,7 +233,7 @@ fun SipekaProductCard(
             // Vendor / Kategori Tag
             Text(
                 text = (product.category ?: "PKK").uppercase(),
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 fontWeight = FontWeight.Bold,
                 color = BtnMocha,
                 letterSpacing = 0.5.sp,
@@ -240,19 +241,19 @@ fun SipekaProductCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Nama Produk (2 Lines Max)
+            // Nama Produk (2 Lines Max, 14.sp Bold for readability)
             Text(
                 text = product.name ?: "",
-                fontSize = 12.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextDark,
-                lineHeight = 16.sp,
+                lineHeight = 18.sp,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.height(34.dp)
+                modifier = Modifier.height(38.dp)
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Row Harga & Stepper Counter / Add Button
             Row(
@@ -262,7 +263,7 @@ fun SipekaProductCard(
             ) {
                 Text(
                     text = product.price.toRupiahFormat(),
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = BtnDarkChocolate
                 )
@@ -275,42 +276,44 @@ fun SipekaProductCard(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(2.dp)
+                            modifier = Modifier.padding(4.dp)
                         ) {
                             IconButton(
                                 onClick = { onRemoveFromCart(product) },
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .background(CardCreamWhite, RoundedCornerShape(6.dp))
+                                    .size(32.dp)
+                                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                                    .background(CardCreamWhite, RoundedCornerShape(8.dp))
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Remove,
                                     contentDescription = "Kurang",
                                     tint = TextDark,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
 
                             Text(
                                 text = "$cartQuantity",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BtnDarkChocolate,
-                                modifier = Modifier.padding(horizontal = 6.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp)
                             )
 
                             IconButton(
                                 onClick = { onAddToCart(product) },
                                 enabled = product.stock > cartQuantity,
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .background(BtnDarkChocolate, RoundedCornerShape(6.dp))
+                                    .size(32.dp)
+                                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                                    .background(BtnDarkChocolate, RoundedCornerShape(8.dp))
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = "Tambah",
                                     tint = BtnCreamWhite,
-                                    modifier = Modifier.size(14.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
                         }
@@ -328,13 +331,15 @@ fun SipekaProductCard(
                             disabledContentColor = TextMuted
                         ),
                         contentPadding = PaddingValues(0.dp),
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier
+                            .size(36.dp)
+                            .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Tambah",
                             tint = BtnCreamWhite,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }

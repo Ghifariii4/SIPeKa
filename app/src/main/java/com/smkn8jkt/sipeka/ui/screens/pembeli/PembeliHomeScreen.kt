@@ -135,22 +135,25 @@ import com.smkn8jkt.sipeka.ui.theme.GreenSuccessContainer
 import com.smkn8jkt.sipeka.ui.theme.OutlineWarm
 import com.smkn8jkt.sipeka.ui.theme.PlaceholderWarm
 import com.smkn8jkt.sipeka.ui.theme.RedError
+import com.smkn8jkt.sipeka.ui.theme.SegmentBg
 import com.smkn8jkt.sipeka.ui.theme.TextDark
 import com.smkn8jkt.sipeka.ui.theme.TextLight
 import com.smkn8jkt.sipeka.ui.theme.TextMuted
+import com.smkn8jkt.sipeka.ui.theme.VibrantOrange
+import com.smkn8jkt.sipeka.ui.theme.DarkMochaHero
+import com.smkn8jkt.sipeka.ui.theme.HeroIconBg
+import com.smkn8jkt.sipeka.ui.theme.SoftPeachBadge
+import com.smkn8jkt.sipeka.ui.theme.LiveStockDot
+import com.smkn8jkt.sipeka.ui.theme.ChipUnselectedBg
+import com.smkn8jkt.sipeka.ui.theme.ChipUnselectedText
+import com.smkn8jkt.sipeka.ui.theme.HeaderAmberGold
+import com.smkn8jkt.sipeka.ui.theme.PageBgWarm
+import com.smkn8jkt.sipeka.ui.components.SipekaLottieEmptyState
+import com.smkn8jkt.sipeka.ui.components.SipekaProductSkeletonCard
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.imePadding
 import com.smkn8jkt.sipeka.util.QrCodeUtil
 import kotlinx.coroutines.launch
-
-// Color constants matching the user's design mockup
-val VibrantOrange = Color(0xFFF95721)
-val DarkMochaHero = Color(0xFF451A0D)
-val HeroIconBg = Color(0xFF5A2818)
-val SoftPeachBadge = Color(0xFFFEE6D8)
-val LiveStockDot = Color(0xFFEF4444)
-val ChipUnselectedBg = Color(0xFFFDF2E9)
-val ChipUnselectedText = Color(0xFF4D2314)
-val HeaderAmberGold = Color(0xFFC25E00)
-val PageBgWarm = Color(0xFFFBF8F4)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -494,9 +497,9 @@ fun PembeliMockupHomeTab(
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 105.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 120.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize()
     ) {
         // 1. Header Bagian Atas
@@ -737,39 +740,20 @@ fun PembeliMockupHomeTab(
 
         // 6. Loading or Empty State or Product Cards Grid
         if (isLoading) {
-            item(span = { GridItemSpan(2) }) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = VibrantOrange, modifier = Modifier.size(32.dp))
-                }
+            items(4) {
+                SipekaProductSkeletonCard()
             }
         } else if (products.isEmpty()) {
             item(span = { GridItemSpan(2) }) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.Default.Fastfood,
-                            contentDescription = null,
-                            tint = TextMuted,
-                            modifier = Modifier.size(44.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Tidak ada menu yang sesuai.",
-                            fontSize = 13.sp,
-                            color = TextMuted
-                        )
+                SipekaLottieEmptyState(
+                    message = "Menu Tidak Ditemukan",
+                    description = "Coba ubah kata kunci pencarian atau pilih kategori lain untuk melihat pilihan menu.",
+                    ctaText = "Reset Filter",
+                    onCtaClick = {
+                        onSearchQueryChange("")
+                        onSelectCategory("Semua")
                     }
-                }
+                )
             }
         } else {
             items(products, key = { it.id }) { product ->
@@ -825,10 +809,10 @@ fun MockupProductCard(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (isOutOfStock) Modifier.alpha(0.6f) else Modifier),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-        border = BorderStroke(1.dp, Color(0xFFEFEAE2))
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, BorderStitch)
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             // Container Gambar Atas
@@ -847,7 +831,7 @@ fun MockupProductCard(
 
                 // Tag Kategori di Kiri Atas
                 Surface(
-                    shape = RoundedCornerShape(5.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = Color.Black.copy(alpha = 0.45f),
                     modifier = Modifier
                         .align(Alignment.TopStart)
@@ -858,13 +842,13 @@ fun MockupProductCard(
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
 
                 // Tag Stok di Kanan Atas
                 Surface(
-                    shape = RoundedCornerShape(5.dp),
+                    shape = RoundedCornerShape(8.dp),
                     color = Color.White,
                     modifier = Modifier
                         .align(Alignment.TopEnd)
@@ -877,10 +861,10 @@ fun MockupProductCard(
                             isBeverage -> "Stok: ${product.stock} cup"
                             else -> "Stok: ${product.stock} pcs"
                         },
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (product.stock <= 3) VibrantOrange else TextDark,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
@@ -889,27 +873,27 @@ fun MockupProductCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(10.dp)
+                    .padding(8.dp)
             ) {
                 // Judul Produk
                 Text(
                     text = product.name ?: "",
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextDark,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    lineHeight = 17.sp,
-                    modifier = Modifier.height(34.dp)
+                    lineHeight = 18.sp,
+                    modifier = Modifier.height(38.dp)
                 )
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 // Deskripsi Singkat
                 Text(
                     text = product.description?.ifBlank { "Menu spesial kantin PKK SMKN 8" }
                         ?: "Menu spesial kantin PKK SMKN 8",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = TextMuted,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -925,35 +909,36 @@ fun MockupProductCard(
                 ) {
                     Text(
                         text = product.price.toRupiahFormat(),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextDark
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = BtnDarkChocolate
                     )
 
                     if (isOutOfStock) {
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color(0xFFF3EFEA)
+                            shape = RoundedCornerShape(8.dp),
+                            color = SegmentBg
                         ) {
                             Text(
                                 text = "Habis",
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextMuted,
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     } else if (cartQuantity > 0) {
                         // Stepper mini jika sudah dipilih
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            modifier = Modifier.padding(2.dp)
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = Color(0xFFFEE6D8),
+                                color = SoftPeachBadge,
                                 modifier = Modifier
-                                    .size(24.dp)
+                                    .size(32.dp)
+                                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                     .clickable { onDecrease() }
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -961,7 +946,7 @@ fun MockupProductCard(
                                         imageVector = Icons.Default.Remove,
                                         contentDescription = "-",
                                         tint = VibrantOrange,
-                                        modifier = Modifier.size(12.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
                             }
@@ -970,14 +955,16 @@ fun MockupProductCard(
                                 text = "$cartQuantity",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Black,
-                                color = TextDark
+                                color = TextDark,
+                                modifier = Modifier.padding(horizontal = 8.dp)
                             )
 
                             Surface(
                                 shape = CircleShape,
                                 color = VibrantOrange,
                                 modifier = Modifier
-                                    .size(24.dp)
+                                    .size(32.dp)
+                                    .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                     .clickable { onIncrease() }
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
@@ -985,7 +972,7 @@ fun MockupProductCard(
                                         imageVector = Icons.Default.Add,
                                         contentDescription = "+",
                                         tint = Color.White,
-                                        modifier = Modifier.size(12.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
                             }
@@ -996,7 +983,8 @@ fun MockupProductCard(
                             shape = RoundedCornerShape(8.dp),
                             color = VibrantOrange,
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(36.dp)
+                                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                                 .clickable { onAddToCart() }
                         ) {
                             Box(contentAlignment = Alignment.Center) {
@@ -1004,7 +992,7 @@ fun MockupProductCard(
                                     imageVector = Icons.Default.Add,
                                     contentDescription = "Tambah ke Keranjang",
                                     tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
+                                    modifier = Modifier.size(20.dp)
                                 )
                             }
                         }
@@ -1046,8 +1034,8 @@ fun PembeliOrdersTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 36.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Header Title
         item {
@@ -1065,7 +1053,7 @@ fun PembeliOrdersTab(
                     )
                     Text(
                         text = "Hanya menampilkan riwayat pesanan milik Anda ($userName)",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = TextMuted
                     )
                 }
@@ -1081,65 +1069,39 @@ fun PembeliOrdersTab(
                 listOf("Semua", "Pending", "Selesai").forEach { filter ->
                     val isSelected = selectedFilter == filter
                     Surface(
-                        shape = RoundedCornerShape(18.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = if (isSelected) DarkMochaHero else Color.White,
                         border = BorderStroke(1.dp, if (isSelected) DarkMochaHero else Color(0xFFE5E0D8)),
-                        modifier = Modifier.clickable { selectedFilter = filter }
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = 48.dp)
+                            .clickable { selectedFilter = filter }
                     ) {
-                        Text(
-                            text = if (filter == "Pending") "Menunggu Pengambilan" else filter,
-                            fontSize = 11.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) Color.White else TextDark,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
-                        )
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = if (filter == "Pending") "Menunggu Pengambilan" else filter,
+                                fontSize = 12.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                color = if (isSelected) Color.White else TextDark,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
                     }
                 }
             }
         }
 
         if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 40.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(color = VibrantOrange, modifier = Modifier.size(32.dp))
-                }
+            items(3) {
+                SipekaProductSkeletonCard()
             }
         } else if (filtered.isEmpty()) {
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 40.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
-                            contentDescription = null,
-                            tint = TextMuted,
-                            modifier = Modifier.size(48.dp)
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Belum ada pesanan ${if (selectedFilter != "Semua") selectedFilter.lowercase() else ""} untuk akun Anda.",
-                            color = TextMuted,
-                            fontSize = 13.sp,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Silakan pesan menu di tab Beranda.",
-                            color = HeaderAmberGold,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
+                SipekaLottieEmptyState(
+                    message = "Belum Ada Pesanan",
+                    description = "Riwayat pemesanan menu kantin Anda akan tersimpan rapi di sini.",
+                    ctaText = "Pesan Sekarang",
+                    onCtaClick = onRefresh
+                )
             }
         } else {
             items(filtered, key = { it.id ?: it.qrCode ?: "" }) { order ->
@@ -1296,6 +1258,7 @@ fun PembeliEditProfileTab(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
+            .imePadding()
             .verticalScroll(rememberScrollState())
     ) {
         Spacer(modifier = Modifier.height(16.dp))
@@ -1580,7 +1543,7 @@ fun PembeliEditProfileTab(
             Text("Keluar dari Akun", fontWeight = FontWeight.Bold)
         }
 
-        Spacer(modifier = Modifier.height(48.dp))
+        Spacer(modifier = Modifier.height(120.dp))
     }
 }
 

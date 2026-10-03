@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -112,6 +113,11 @@ import com.smkn8jkt.sipeka.ui.theme.SegmentBg
 import com.smkn8jkt.sipeka.ui.theme.TextDark
 import com.smkn8jkt.sipeka.ui.theme.TextLight
 import com.smkn8jkt.sipeka.ui.theme.TextMuted
+import com.smkn8jkt.sipeka.ui.theme.VibrantOrange
+import com.smkn8jkt.sipeka.ui.theme.SoftPeachBadge
+import com.smkn8jkt.sipeka.ui.components.SipekaLottieEmptyState
+import com.smkn8jkt.sipeka.ui.components.SipekaProductSkeletonCard
+import androidx.compose.foundation.layout.defaultMinSize
 
 @Composable
 fun HomeScreen(
@@ -187,14 +193,15 @@ fun KasirHomeScreen(
                 .fillMaxSize()
                 .background(BgLightCanvas)
                 .safeDrawingPadding()
-                .padding(24.dp),
+                .padding(24.dp)
+                .imePadding(),
             contentAlignment = Alignment.Center
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 border = BorderStroke(1.dp, BorderStitch)
             ) {
                 Column(
@@ -227,16 +234,16 @@ fun KasirHomeScreen(
                         color = TextDark
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Text(
                         text = "Masukkan modal awal laci kasir untuk mulai transaksi POS.",
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         color = TextMuted,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     SipekaTextField(
                         value = startingCashInput,
@@ -246,7 +253,7 @@ fun KasirHomeScreen(
                         keyboardType = KeyboardType.Number
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     PrimaryButton(
                         text = "Buka Shift Kasir",
@@ -554,11 +561,11 @@ fun KasirHomeScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 12.dp,
-                bottom = 24.dp
+                top = 16.dp,
+                bottom = 120.dp
             ),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -566,33 +573,35 @@ fun KasirHomeScreen(
             // 1. Mode Transaksi Toggle Segmented Control (Stitch POS Style)
             item(span = { GridItemSpan(2) }) {
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = SegmentBg,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(3.dp),
+                        modifier = Modifier.padding(4.dp),
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         // Button Mode POS
                         Surface(
-                            shape = RoundedCornerShape(9.dp),
+                            shape = RoundedCornerShape(12.dp),
                             color = BtnDarkChocolate,
                             shadowElevation = 1.dp,
                             modifier = Modifier.weight(1f)
                         ) {
                             Row(
-                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 10.dp),
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp, horizontal = 8.dp)
+                                    .defaultMinSize(minHeight = 48.dp),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(6.dp)
+                                        .size(8.dp)
                                         .clip(CircleShape)
                                         .background(GreenSuccess)
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
                                     text = "Transaksi POS",
                                     fontSize = 12.sp,
@@ -604,42 +613,44 @@ fun KasirHomeScreen(
 
                         // Button Mode Scan QR PO
                         Surface(
-                            shape = RoundedCornerShape(9.dp),
-                            color = if (pendingPreOrders.isNotEmpty()) Color(0xFFFEE6D8) else Color.Transparent,
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (pendingPreOrders.isNotEmpty()) SoftPeachBadge else Color.Transparent,
                             modifier = Modifier
                                 .weight(1f)
                                 .clickable { showQrDialog = true }
                         ) {
                             Row(
-                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 8.dp),
+                                modifier = Modifier
+                                    .padding(vertical = 8.dp, horizontal = 8.dp)
+                                    .defaultMinSize(minHeight = 48.dp),
                                 horizontalArrangement = Arrangement.Center,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.QrCodeScanner,
                                     contentDescription = "Scan QR",
-                                    tint = if (pendingPreOrders.isNotEmpty()) Color(0xFFC25E00) else TextMuted,
-                                    modifier = Modifier.size(15.dp)
+                                    tint = if (pendingPreOrders.isNotEmpty()) BtnMocha else TextMuted,
+                                    modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
                                     text = "Scan QR Pre-Order",
                                     fontSize = 11.sp,
                                     fontWeight = if (pendingPreOrders.isNotEmpty()) FontWeight.Bold else FontWeight.SemiBold,
-                                    color = if (pendingPreOrders.isNotEmpty()) Color(0xFFC25E00) else TextMuted
+                                    color = if (pendingPreOrders.isNotEmpty()) BtnMocha else TextMuted
                                 )
                                 if (pendingPreOrders.isNotEmpty()) {
                                     Spacer(modifier = Modifier.width(4.dp))
                                     Surface(
                                         shape = CircleShape,
-                                        color = Color(0xFFF95721)
+                                        color = VibrantOrange
                                     ) {
                                         Text(
                                             text = "${pendingPreOrders.size}",
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Black,
                                             color = Color.White,
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                         )
                                     }
                                 }
@@ -653,9 +664,9 @@ fun KasirHomeScreen(
             if (pendingPreOrders.isNotEmpty()) {
                 item(span = { GridItemSpan(2) }) {
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = Color(0xFFFFF3ED),
-                        border = BorderStroke(1.dp, Color(0xFFFFD8C2)),
+                        shape = RoundedCornerShape(16.dp),
+                        color = SoftPeachBadge,
+                        border = BorderStroke(1.dp, BorderStitch),
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable { showQrDialog = true }
@@ -663,7 +674,7 @@ fun KasirHomeScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 12.dp, vertical = 10.dp),
+                                .padding(16.dp),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -673,8 +684,8 @@ fun KasirHomeScreen(
                             ) {
                                 Surface(
                                     shape = CircleShape,
-                                    color = Color(0xFFF95721),
-                                    modifier = Modifier.size(28.dp)
+                                    color = VibrantOrange,
+                                    modifier = Modifier.size(32.dp)
                                 ) {
                                     Box(contentAlignment = Alignment.Center) {
                                         Icon(
@@ -685,32 +696,32 @@ fun KasirHomeScreen(
                                         )
                                     }
                                 }
-                                Spacer(modifier = Modifier.width(10.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Column {
                                     Text(
                                         text = "${pendingPreOrders.size} Pesanan Siswa Menunggu Diambil",
-                                        fontSize = 12.sp,
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF451A0D)
+                                        color = BtnDarkChocolate
                                     )
                                     Text(
                                         text = "Klik untuk verifikasi & serahkan makanan",
                                         fontSize = 11.sp,
-                                        color = Color(0xFF8C5338)
+                                        color = BtnMocha
                                     )
                                 }
                             }
 
                             Surface(
                                 shape = RoundedCornerShape(8.dp),
-                                color = Color(0xFFF95721)
+                                color = VibrantOrange
                             ) {
                                 Text(
                                     text = "Buka",
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                 )
                             }
                         }
@@ -731,7 +742,7 @@ fun KasirHomeScreen(
                         placeholder = {
                             Text(
                                 text = "Cari produk titipan atau barcode...",
-                                fontSize = 12.sp,
+                                fontSize = 13.sp,
                                 color = TextMuted
                             )
                         },
@@ -741,7 +752,7 @@ fun KasirHomeScreen(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "Cari",
                                 tint = TextMuted,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         },
                         trailingIcon = {
@@ -751,7 +762,7 @@ fun KasirHomeScreen(
                                 }
                             }
                         },
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedTextColor = TextDark,
                             unfocusedTextColor = TextDark,
@@ -766,12 +777,12 @@ fun KasirHomeScreen(
 
                     // Quick Barcode Action Button
                     Surface(
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = CardCreamWhite,
                         border = BorderStroke(1.dp, BorderStitch),
                         shadowElevation = 1.dp,
                         modifier = Modifier
-                            .size(46.dp)
+                            .size(48.dp)
                             .clickable { showLiveScannerPopup = true }
                     ) {
                         Box(contentAlignment = Alignment.Center) {
@@ -779,7 +790,7 @@ fun KasirHomeScreen(
                                 imageVector = Icons.Default.QrCodeScanner,
                                 contentDescription = "Scan",
                                 tint = BtnDarkChocolate,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
@@ -789,25 +800,27 @@ fun KasirHomeScreen(
             // 3. Category Pill Chips Filter (Stitch Style)
             item(span = { GridItemSpan(2) }) {
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     items(categories) { category ->
                         val isSelected = category == selectedCategory
                         Surface(
-                            shape = RoundedCornerShape(20.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
                             border = if (!isSelected) BorderStroke(1.dp, BorderStitch) else null,
                             shadowElevation = if (isSelected) 2.dp else 0.dp,
-                            modifier = Modifier.clickable { viewModel.updateSelectedCategory(category) }
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 48.dp)
+                                .clickable { viewModel.updateSelectedCategory(category) }
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             ) {
                                 Text(
                                     text = category,
-                                    fontSize = 11.sp,
+                                    fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     color = if (isSelected) BtnCreamWhite else TextDark
                                 )
@@ -820,7 +833,7 @@ fun KasirHomeScreen(
             // 4. Strip Margin Kas PKK (Stitch Specification)
             item(span = { GridItemSpan(2) }) {
                 Surface(
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = BannerMarginBg,
                     border = BorderStroke(1.dp, BannerMarginBorder),
                     modifier = Modifier.fillMaxWidth()
@@ -828,7 +841,7 @@ fun KasirHomeScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 8.dp),
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -848,28 +861,28 @@ fun KasirHomeScreen(
                                     imageVector = Icons.Default.MonetizationOn,
                                     contentDescription = "Margin",
                                     tint = BtnDarkChocolate,
-                                    modifier = Modifier.size(15.dp)
+                                    modifier = Modifier.size(16.dp)
                                 )
                             }
 
                             Text(
                                 text = "Margin Kas PKK: Otomatis Rp 1.000/item ke sekolah",
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = TextDark
                             )
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
+                            shape = RoundedCornerShape(8.dp),
                             color = CardCreamWhite.copy(alpha = 0.8f)
                         ) {
                             Text(
                                 text = "100% Amanah",
-                                fontSize = 9.sp,
+                                fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BtnDarkChocolate,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
@@ -886,13 +899,13 @@ fun KasirHomeScreen(
                     Column {
                         Text(
                             text = "Etalase Titipan Siswa",
-                            fontSize = 14.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextDark
                         )
                         Text(
                             text = "Stok sinkron live otomatis",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = TextMuted
                         )
                     }
@@ -903,18 +916,18 @@ fun KasirHomeScreen(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(6.dp)
+                                    .size(8.dp)
                                     .clip(CircleShape)
                                     .background(GreenSuccess)
                             )
-                            Spacer(modifier = Modifier.width(5.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "${filteredProducts.size} Siap Saji",
-                                fontSize = 10.sp,
+                                fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BtnDarkChocolate
                             )
@@ -925,27 +938,20 @@ fun KasirHomeScreen(
 
             // 6. Grid Produk 2-Kolom Sesuai Stitch Mockup
             if (isLoading) {
-                item(span = { GridItemSpan(2) }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Memuat data menu titipan...", color = TextMuted, fontSize = 13.sp)
-                    }
+                items(4) {
+                    SipekaProductSkeletonCard()
                 }
             } else if (filteredProducts.isEmpty()) {
                 item(span = { GridItemSpan(2) }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text("Menu tidak ditemukan", color = TextMuted, fontSize = 13.sp)
-                    }
+                    SipekaLottieEmptyState(
+                        message = "Menu Tidak Ditemukan",
+                        description = "Coba ubah kata kunci pencarian atau pilih kategori lain untuk melihat produk titipan.",
+                        ctaText = "Reset Filter",
+                        onCtaClick = {
+                            viewModel.updateSearchQuery("")
+                            viewModel.updateSelectedCategory("Semua")
+                        }
+                    )
                 }
             } else {
                 items(filteredProducts, key = { it.id }) { product ->
@@ -1268,31 +1274,24 @@ fun KasirHomeScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // DAFTAR ANTREAN PRE-ORDER AKTIF
                     Text(
                         text = "Antrean Siswa Menunggu Pengambilan:",
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark
                     )
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     if (pendingPreOrders.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = "Tidak ada antrean pre-order saat ini.",
-                                fontSize = 11.sp,
-                                color = TextMuted
-                            )
-                        }
+                        SipekaLottieEmptyState(
+                            message = "Tidak Ada Antrean",
+                            description = "Pesanan siswa yang menunggu penyerahan makanan akan muncul di sini secara otomatis.",
+                            ctaText = null
+                        )
                     } else {
                         Column(
                             modifier = Modifier.fillMaxWidth(),
@@ -1301,11 +1300,12 @@ fun KasirHomeScreen(
                             pendingPreOrders.forEach { order ->
                                 Card(
                                     modifier = Modifier.fillMaxWidth(),
-                                    shape = RoundedCornerShape(10.dp),
+                                    shape = RoundedCornerShape(16.dp),
                                     colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
+                                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                                     border = BorderStroke(1.dp, BorderStitch)
                                 ) {
-                                    Column(modifier = Modifier.padding(10.dp)) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1314,37 +1314,37 @@ fun KasirHomeScreen(
                                             Column(modifier = Modifier.weight(1f)) {
                                                 Text(
                                                     text = "👤 ${order.displayCustomerName}",
-                                                    fontSize = 12.sp,
+                                                    fontSize = 14.sp,
                                                     fontWeight = FontWeight.Bold,
                                                     color = TextDark
                                                 )
                                                 Text(
                                                     text = "Kelas: ${order.displayCustomerClass} • #${order.id?.take(8)}",
-                                                    fontSize = 10.sp,
+                                                    fontSize = 12.sp,
                                                     color = TextMuted
                                                 )
                                             }
 
                                             Text(
                                                 text = (order.totalAmount ?: 0.0).toRupiahFormat(),
-                                                fontSize = 12.sp,
+                                                fontSize = 14.sp,
                                                 fontWeight = FontWeight.ExtraBold,
                                                 color = BtnDarkChocolate
                                             )
                                         }
 
-                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
 
                                         val itemsSummary = order.displayItems.joinToString(", ") { "${it.quantity ?: 1}x ${it.displayProductName}" }
                                         if (itemsSummary.isNotBlank()) {
                                             Text(
                                                 text = "Menu: $itemsSummary",
-                                                fontSize = 10.sp,
-                                                color = Color(0xFF6B4226)
+                                                fontSize = 12.sp,
+                                                color = BtnMocha
                                             )
                                         }
 
-                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
 
                                         Button(
                                             onClick = {
@@ -1352,21 +1352,23 @@ fun KasirHomeScreen(
                                                 showQrDialog = false
                                                 qrCodeInput = ""
                                             },
-                                            shape = RoundedCornerShape(8.dp),
+                                            shape = RoundedCornerShape(12.dp),
                                             colors = ButtonDefaults.buttonColors(containerColor = BtnDarkChocolate),
-                                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-                                            modifier = Modifier.fillMaxWidth()
+                                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .defaultMinSize(minHeight = 48.dp)
                                         ) {
                                             Icon(
                                                 imageVector = Icons.Default.CheckCircle,
                                                 contentDescription = null,
                                                 tint = BtnCreamWhite,
-                                                modifier = Modifier.size(14.dp)
+                                                modifier = Modifier.size(16.dp)
                                             )
-                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Spacer(modifier = Modifier.width(8.dp))
                                             Text(
                                                 text = "Verifikasi & Serahkan",
-                                                fontSize = 11.sp,
+                                                fontSize = 12.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = BtnCreamWhite
                                             )
@@ -1380,15 +1382,18 @@ fun KasirHomeScreen(
             },
             confirmButton = {},
             dismissButton = {
-                TextButton(onClick = {
-                    showQrDialog = false
-                    qrCodeInput = ""
-                }) {
-                    Text("Tutup", color = TextMuted)
+                TextButton(
+                    onClick = {
+                        showQrDialog = false
+                        qrCodeInput = ""
+                    },
+                    modifier = Modifier.defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                ) {
+                    Text("Tutup", color = TextMuted, fontSize = 14.sp)
                 }
             },
             containerColor = CardCreamWhite,
-            shape = RoundedCornerShape(18.dp)
+            shape = RoundedCornerShape(24.dp)
         )
     }
 

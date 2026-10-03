@@ -57,6 +57,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import com.smkn8jkt.sipeka.ui.components.SipekaLottieEmptyState
+import com.smkn8jkt.sipeka.ui.components.SipekaProductSkeletonCard
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -376,16 +380,17 @@ fun AdminFinanceTab(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
+            .imePadding()
             .verticalScroll(rememberScrollState())
     ) {
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // CARD LABA SEKOLAH (Hero Card)
+        // CARD LABA SEKOLAH (Hero Card - Bento Box 24dp)
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            shape = RoundedCornerShape(24.dp),
             colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -395,7 +400,7 @@ fun AdminFinanceTab(
                             colors = listOf(BgDarkEspresso, BtnDarkChocolate)
                         )
                     )
-                    .padding(20.dp)
+                    .padding(24.dp)
             ) {
                 Column {
                     Row(
@@ -415,20 +420,20 @@ fun AdminFinanceTab(
                                     imageVector = Icons.Default.MonetizationOn,
                                     contentDescription = "Profit",
                                     tint = BtnCreamWhite,
-                                    modifier = Modifier.size(22.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
-                            Spacer(modifier = Modifier.width(10.dp))
+                            Spacer(modifier = Modifier.width(16.dp))
                             Text(
                                 text = "Laba Bersih Kas PKK",
-                                fontSize = 15.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BtnCreamWhite
                             )
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = BtnMocha.copy(alpha = 0.4f)
                         ) {
                             Text(
@@ -436,16 +441,16 @@ fun AdminFinanceTab(
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BtnCreamWhite,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
                         text = schoolProfit.toRupiahFormat(),
-                        fontSize = 26.sp,
+                        fontSize = 28.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = BtnCreamWhite
                     )
@@ -453,14 +458,14 @@ fun AdminFinanceTab(
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Bagian keuntungan SMKN 8 dari bagi hasil penitip & penjualan",
-                        fontSize = 11.sp,
+                        fontSize = 14.sp,
                         color = BgWarmTan.copy(alpha = 0.85f)
                     )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // VALIDASI SETORAN KASIR HEADER
         Row(
@@ -473,27 +478,27 @@ fun AdminFinanceTab(
                     imageVector = Icons.Default.PointOfSale,
                     contentDescription = "Validation",
                     tint = TextDark,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Validasi Setoran Kasir",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextDark
                 )
             }
 
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(16.dp),
                 color = BtnDarkChocolate
             ) {
                 Text(
                     text = "${pendingShifts.size} Shift",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = BtnCreamWhite,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
             }
         }
@@ -533,7 +538,7 @@ fun AdminFinanceTab(
                             uncheckedColor = TextMuted
                         )
                     )
-                    Text("Pilih Semua", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextDark)
+                    Text("Pilih Semua", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextDark)
                 }
 
                 if (selectedShifts.isNotEmpty()) {
@@ -543,39 +548,28 @@ fun AdminFinanceTab(
                             selectedShifts.clear()
                         },
                         enabled = !isLoading,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = BtnDarkChocolate,
                             contentColor = BtnCreamWhite
                         ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                     ) {
-                        Text("Validasi (${selectedShifts.size})", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("Validasi (${selectedShifts.size})", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         if (pendingShifts.isEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
-                border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.4f))
-            ) {
-                Text(
-                    text = "Semua setoran shift kasir telah divalidasi.",
-                    fontSize = 12.sp,
-                    color = TextMuted,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp)
-                )
-            }
+            SipekaLottieEmptyState(
+                title = "Semua Shift Tervalidasi",
+                description = "Tidak ada setoran kasir yang menunggu validasi saat ini.",
+                animationRes = com.smkn8jkt.sipeka.R.raw.lottie_success
+            )
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 pendingShifts.forEach { shift ->
@@ -594,7 +588,7 @@ fun AdminFinanceTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // BAGI HASIL PENITIP HEADER
         Row(
@@ -607,27 +601,27 @@ fun AdminFinanceTab(
                     imageVector = Icons.Default.AccountBalanceWallet,
                     contentDescription = "Payouts",
                     tint = TextDark,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Bagi Hasil Penitip",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextDark
                 )
             }
 
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(16.dp),
                 color = BtnMocha
             ) {
                 Text(
                     text = "${pendingPayouts.size} Penitip",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
                     color = BtnCreamWhite,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                 )
             }
         }
@@ -667,7 +661,7 @@ fun AdminFinanceTab(
                             uncheckedColor = TextMuted
                         )
                     )
-                    Text("Pilih Semua", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextDark)
+                    Text("Pilih Semua", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextDark)
                 }
 
                 if (selectedPayouts.isNotEmpty()) {
@@ -677,39 +671,28 @@ fun AdminFinanceTab(
                             selectedPayouts.clear()
                         },
                         enabled = !isLoading,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = BtnDarkChocolate,
                             contentColor = BtnCreamWhite
                         ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                     ) {
-                        Text("Cairkan (${selectedPayouts.size})", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("Cairkan (${selectedPayouts.size})", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         if (pendingPayouts.isEmpty()) {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(14.dp),
-                colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
-                border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.4f))
-            ) {
-                Text(
-                    text = "Tidak ada pencairan dana penitip yang tertunda.",
-                    fontSize = 12.sp,
-                    color = TextMuted,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(14.dp)
-                )
-            }
+            SipekaLottieEmptyState(
+                title = "Pencairan Selesai",
+                description = "Tidak ada pencairan dana penitip yang tertunda saat ini.",
+                animationRes = com.smkn8jkt.sipeka.R.raw.lottie_success
+            )
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 pendingPayouts.forEach { payout ->
@@ -728,7 +711,7 @@ fun AdminFinanceTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(120.dp))
     }
 }
 
@@ -759,8 +742,8 @@ fun AdminTransactionsTab(
 
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 36.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Total Omzet Card (Dark Espresso)
         item {
@@ -768,7 +751,7 @@ fun AdminTransactionsTab(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = BgDarkEspresso),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -780,11 +763,11 @@ fun AdminTransactionsTab(
                     Column {
                         Text(
                             text = "Total Omzet Penjualan",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             color = BgWarmTan,
                             fontWeight = FontWeight.Medium
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = totalOmzet.toRupiahFormat(),
                             fontSize = 20.sp,
@@ -794,7 +777,7 @@ fun AdminTransactionsTab(
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(10.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = BtnMocha.copy(alpha = 0.5f)
                     ) {
                         Text(
@@ -802,7 +785,7 @@ fun AdminTransactionsTab(
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = BtnCreamWhite,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
                     }
                 }
@@ -814,7 +797,7 @@ fun AdminTransactionsTab(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                placeholder = { Text("Cari ID Transaksi...", fontSize = 13.sp, color = TextMuted) },
+                placeholder = { Text("Cari ID Transaksi...", fontSize = 14.sp, color = TextMuted) },
                 singleLine = true,
                 trailingIcon = {
                     if (searchQuery.isNotEmpty()) {
@@ -823,7 +806,7 @@ fun AdminTransactionsTab(
                         }
                     }
                 },
-                shape = CircleShape,
+                shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedContainerColor = CardCreamWhite,
                     unfocusedContainerColor = CardCreamWhite,
@@ -832,53 +815,46 @@ fun AdminTransactionsTab(
                     focusedTextColor = TextDark,
                     unfocusedTextColor = TextDark
                 ),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .defaultMinSize(minHeight = 48.dp)
             )
         }
 
         if (isLoading) {
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 40.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Memuat data penjualan...", color = TextMuted, fontSize = 14.sp)
-                }
+            items(3) {
+                SipekaProductSkeletonCard()
             }
         } else if (filteredOrders.isEmpty()) {
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 40.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("Belum ada data transaksi penjualan.", color = TextMuted, fontSize = 13.sp)
-                }
+                SipekaLottieEmptyState(
+                    title = "Belum Ada Transaksi",
+                    description = if (searchQuery.isNotBlank()) "Tidak ditemukan transaksi dengan kata kunci \"$searchQuery\"." else "Belum ada data transaksi penjualan yang tercatat.",
+                    ctaText = if (searchQuery.isNotBlank()) "Reset Pencarian" else null,
+                    onCtaClick = { searchQuery = "" }
+                )
             }
         } else {
             groupedOrders.forEach { (headerTitle, ordersInGroup) ->
                 item {
                     Surface(
                         color = BgDarkEspresso.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 4.dp, bottom = 2.dp)
+                            .padding(top = 4.dp, bottom = 4.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = Icons.Default.CalendarToday,
                                 contentDescription = "Shift",
                                 tint = BtnDarkChocolate,
-                                modifier = Modifier.size(14.dp)
+                                modifier = Modifier.size(16.dp)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = headerTitle,
                                 fontSize = 12.sp,
@@ -914,9 +890,10 @@ fun AdminUsersTab(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 16.dp)
+            .imePadding()
             .verticalScroll(rememberScrollState())
     ) {
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
         // ACC Pendaftaran Card
         Card(
@@ -926,7 +903,7 @@ fun AdminUsersTab(
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.4f))
         ) {
-            Column(modifier = Modifier.padding(14.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -937,39 +914,39 @@ fun AdminUsersTab(
                             imageVector = Icons.Default.GroupAdd,
                             contentDescription = "Pending",
                             tint = TextDark,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(24.dp)
                         )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Persetujuan Akun (ACC)",
-                            fontSize = 14.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextDark
                         )
                     }
 
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = BtnMocha
                     ) {
                         Text(
                             text = "${pendingUsers.size} Antrean",
-                            fontSize = 10.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = BtnCreamWhite,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 if (pendingUsers.isEmpty()) {
                     Text(
                         text = "Belum ada pendaftaran akun baru.",
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         color = TextMuted,
-                        modifier = Modifier.padding(vertical = 4.dp)
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -989,34 +966,34 @@ fun AdminUsersTab(
         // Tambah Kasir Button
         Button(
             onClick = onOpenAddKasir,
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = BtnDarkChocolate,
                 contentColor = BtnCreamWhite
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(46.dp)
+                .defaultMinSize(minHeight = 48.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.PersonAdd,
                 contentDescription = "Add",
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "+ Tambah Petugas Kasir Baru",
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Daftar Semua User
         Text(
             text = "Daftar Pengguna Sistem (${allUsers.size}) • Klik untuk detail/edit",
-            fontSize = 13.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
             color = TextDark
         )
@@ -1031,11 +1008,14 @@ fun AdminUsersTab(
             border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.4f))
         ) {
             Column(
-                modifier = Modifier.padding(14.dp),
+                modifier = Modifier.padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (allUsers.isEmpty()) {
-                    Text("Belum ada data pengguna.", fontSize = 12.sp, color = TextMuted)
+                    SipekaLottieEmptyState(
+                        title = "Belum Ada Pengguna",
+                        description = "Belum ada data pengguna yang terdaftar di sistem."
+                    )
                 } else {
                     allUsers.forEachIndexed { index, user ->
                         UserListRow(
@@ -1050,33 +1030,33 @@ fun AdminUsersTab(
             }
         }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         // Logout Button
         OutlinedButton(
             onClick = onLogout,
-            shape = RoundedCornerShape(12.dp),
-            border = BorderStroke(1.dp, BtnDarkChocolate),
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.5.dp, BtnDarkChocolate),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(44.dp)
+                .defaultMinSize(minHeight = 48.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = "Logout",
                 tint = BtnDarkChocolate,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Keluar dari Akun (Logout)",
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = BtnDarkChocolate
             )
         }
 
-        Spacer(modifier = Modifier.height(28.dp))
+        Spacer(modifier = Modifier.height(120.dp))
     }
 }
 
@@ -1092,7 +1072,7 @@ fun ShiftValidationCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onToggleSelect() },
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) BtnMocha.copy(alpha = 0.12f) else CardCreamWhite
         ),
@@ -1105,7 +1085,7 @@ fun ShiftValidationCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
@@ -1117,7 +1097,7 @@ fun ShiftValidationCard(
                 )
             )
 
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -1127,34 +1107,34 @@ fun ShiftValidationCard(
                 ) {
                     Text(
                         text = shift.displayKasirName,
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark
                     )
 
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = AmberWarningContainer
                     ) {
                         Text(
                             text = "BELUM DIVALIDASI",
-                            fontSize = 9.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = AmberWarning,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = "Selesai: ${shift.displayTime}",
-                    fontSize = 11.sp,
+                    fontSize = 12.sp,
                     color = TextMuted
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1162,10 +1142,10 @@ fun ShiftValidationCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Total Setoran:", fontSize = 11.sp, color = TextMuted)
+                        Text("Total Setoran:", fontSize = 12.sp, color = TextMuted)
                         Text(
                             text = (shift.expectedCash ?: 0.0).toRupiahFormat(),
-                            fontSize = 14.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = BtnDarkChocolate
                         )
@@ -1174,21 +1154,21 @@ fun ShiftValidationCard(
                     Button(
                         onClick = onValidate,
                         enabled = !isLoading,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = BtnDarkChocolate,
                             contentColor = BtnCreamWhite
                         ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Check,
                             contentDescription = "Validate",
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Validasi", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("Validasi", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -1208,7 +1188,7 @@ fun PayoutCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onToggleSelect() },
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isSelected) BtnMocha.copy(alpha = 0.12f) else CardCreamWhite
         ),
@@ -1221,7 +1201,7 @@ fun PayoutCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp),
+                .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Checkbox(
@@ -1233,7 +1213,7 @@ fun PayoutCard(
                 )
             )
 
-            Spacer(modifier = Modifier.width(6.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
@@ -1243,26 +1223,26 @@ fun PayoutCard(
                 ) {
                     Text(
                         text = payout.displayPenitipName,
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark
                     )
 
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = RedErrorContainer
                     ) {
                         Text(
                             text = "BELUM DIBAYAR",
-                            fontSize = 9.sp,
+                            fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
                             color = RedError,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1270,10 +1250,10 @@ fun PayoutCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("Bagi Hasil Bersih:", fontSize = 11.sp, color = TextMuted)
+                        Text("Bagi Hasil Bersih:", fontSize = 12.sp, color = TextMuted)
                         Text(
                             text = payout.displayAmount.toRupiahFormat(),
-                            fontSize = 14.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = BtnDarkChocolate
                         )
@@ -1282,15 +1262,15 @@ fun PayoutCard(
                     Button(
                         onClick = onProcessPayout,
                         enabled = !isLoading,
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = BtnMocha,
                             contentColor = BtnCreamWhite
                         ),
-                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-                        modifier = Modifier.height(32.dp)
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                     ) {
-                        Text("Cairkan Uang", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("Cairkan Uang", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -1456,7 +1436,7 @@ fun AdminTransactionCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.4f))
@@ -1464,7 +1444,7 @@ fun AdminTransactionCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 10.dp)
+                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -1473,38 +1453,38 @@ fun AdminTransactionCard(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Surface(
-                        shape = RoundedCornerShape(6.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = BgWarmTan.copy(alpha = 0.35f)
                     ) {
                         Text(
                             text = "#$shortId",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = BtnDarkChocolate,
-                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
 
                     Text(
                         text = formatOrderDate(order.displayCreatedAt),
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = TextMuted
                     )
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(6.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = if (isCompleted) GreenSuccessContainer else BgWarmTan.copy(alpha = 0.3f)
                 ) {
                     Text(
                         text = if (isCompleted) "SUKSES" else (order.status ?: "SELESAI").uppercase(),
-                        fontSize = 9.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
                         color = if (isCompleted) GreenSuccess else BtnDarkChocolate,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
             }
@@ -1518,14 +1498,14 @@ fun AdminTransactionCard(
             ) {
                 Text(
                     text = "Klik rincian item",
-                    fontSize = 11.sp,
+                    fontSize = 14.sp,
                     color = BtnMocha,
                     fontWeight = FontWeight.Medium
                 )
 
                 Text(
                     text = (order.totalAmount ?: 0.0).toRupiahFormat(),
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = BtnDarkChocolate
                 )
@@ -1540,48 +1520,48 @@ fun PendingUserRow(
     onApprove: () -> Unit
 ) {
     Surface(
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(16.dp),
         color = BgWarmTan.copy(alpha = 0.35f),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = user.name ?: "User Baru",
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = TextDark
                 )
                 Text(
                     text = "ID: ${user.nisnNip ?: "-"} • ${(user.role ?: "Siswa").uppercase()}",
-                    fontSize = 10.sp,
+                    fontSize = 12.sp,
                     color = TextMuted
                 )
             }
 
             Button(
                 onClick = onApprove,
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = BtnDarkChocolate,
                     contentColor = BtnCreamWhite
                 ),
-                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
-                modifier = Modifier.height(30.dp)
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.defaultMinSize(minHeight = 48.dp)
             ) {
                 Icon(
                     imageVector = Icons.Default.CheckCircle,
                     contentDescription = "ACC",
-                    modifier = Modifier.size(12.dp)
+                    modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("ACC", fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                Text("ACC", fontSize = 12.sp, fontWeight = FontWeight.Bold)
             }
         }
     }

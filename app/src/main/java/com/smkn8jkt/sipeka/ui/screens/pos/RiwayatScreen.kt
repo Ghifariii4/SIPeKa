@@ -42,6 +42,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import com.smkn8jkt.sipeka.ui.components.SipekaLottieEmptyState
+import com.smkn8jkt.sipeka.ui.components.SipekaProductSkeletonCard
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
@@ -439,10 +442,10 @@ fun RiwayatScreen(
             contentPadding = PaddingValues(
                 start = 16.dp,
                 end = 16.dp,
-                top = 14.dp,
-                bottom = 32.dp
+                top = 16.dp,
+                bottom = 120.dp
             ),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
@@ -450,11 +453,11 @@ fun RiwayatScreen(
             // Bento-Style Financial Recap Card Sesuai Stitch Mockup
             item {
                 Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -592,82 +595,90 @@ fun RiwayatScreen(
         }
 
         // Filter Tabs (Pill Chips)
-            item {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(filterTabs) { tab ->
-                        val isSelected = tab == selectedFilterTab
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
-                            border = if (!isSelected) BorderStroke(1.dp, BorderStitch) else null,
-                            shadowElevation = if (isSelected) 2.dp else 0.dp,
-                            modifier = Modifier.clickable { selectedFilterTab = tab }
-                        ) {
+        item {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                items(filterTabs) { tab ->
+                    val isSelected = tab == selectedFilterTab
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = if (isSelected) BtnDarkChocolate else CardCreamWhite,
+                        border = if (!isSelected) BorderStroke(1.dp, BorderStitch) else null,
+                        shadowElevation = if (isSelected) 2.dp else 0.dp,
+                        modifier = Modifier
+                            .defaultMinSize(minHeight = 48.dp)
+                            .clickable { selectedFilterTab = tab }
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
                             Text(
                                 text = tab,
-                                fontSize = 11.sp,
+                                fontSize = 12.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                 color = if (isSelected) BtnCreamWhite else TextDark,
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             )
                         }
                     }
                 }
             }
+        }
 
-            // Search Bar
-            item {
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari ID, nama siswa, NISN, QR, menu...", fontSize = 12.sp, color = TextMuted) },
-                    singleLine = true,
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "Search",
-                            tint = TextMuted,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = { searchQuery = "" }) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted, modifier = Modifier.size(16.dp))
-                            }
+        // Search Bar
+        item {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                placeholder = { Text("Cari ID, nama siswa, NISN, QR, menu...", fontSize = 13.sp, color = TextMuted) },
+                singleLine = true,
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        tint = TextMuted,
+                        modifier = Modifier.size(20.dp)
+                    )
+                },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextMuted, modifier = Modifier.size(16.dp))
                         }
-                    },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = TextDark,
-                        unfocusedTextColor = TextDark,
-                        focusedContainerColor = CardCreamWhite,
-                        unfocusedContainerColor = CardCreamWhite,
-                        focusedBorderColor = BtnDarkChocolate,
-                        unfocusedBorderColor = BorderStitch,
-                        cursorColor = BtnDarkChocolate
-                    ),
-                    modifier = Modifier.fillMaxWidth()
+                    }
+                },
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = TextDark,
+                    unfocusedTextColor = TextDark,
+                    focusedContainerColor = CardCreamWhite,
+                    unfocusedContainerColor = CardCreamWhite,
+                    focusedBorderColor = BtnDarkChocolate,
+                    unfocusedBorderColor = BorderStitch,
+                    cursorColor = BtnDarkChocolate
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        // Daftar Riwayat Transaksi
+        if (isLoading) {
+            items(3) {
+                SipekaProductSkeletonCard()
+            }
+        } else if (filteredList.isEmpty()) {
+            item {
+                SipekaLottieEmptyState(
+                    message = "Belum Ada Riwayat Transaksi",
+                    description = "Riwayat transaksi kasir dan voucher QR siswa akan tercatat rapi di sini.",
+                    ctaText = "Muat Ulang",
+                    onCtaClick = {
+                        viewModel.fetchHistory()
+                        viewModel.fetchCurrentShift()
+                    }
                 )
             }
-
-            // Daftar Riwayat Transaksi
-            if (isLoading) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = BtnDarkChocolate, modifier = Modifier.size(32.dp))
-                    }
-                }
-            } else if (filteredList.isEmpty()) {
-                item {
-                    Box(modifier = Modifier.fillMaxWidth().height(180.dp), contentAlignment = Alignment.Center) {
-                        Text("Belum ada riwayat transaksi.", color = TextMuted, fontSize = 13.sp)
-                    }
-                }
-            } else {
+        } else {
                 groupedOrders.forEach { (headerTitle, ordersInGroup) ->
                         item {
                             Surface(
@@ -708,7 +719,7 @@ fun RiwayatScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable { viewModel.selectOrderForDetail(order) },
-                                shape = RoundedCornerShape(14.dp),
+                                shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
                                 border = BorderStroke(1.dp, BorderStitch),
                                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -716,7 +727,7 @@ fun RiwayatScreen(
                                 Column(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(14.dp)
+                                        .padding(16.dp)
                                 ) {
                                     // Header Baris: Tag Jenis Pesanan + ID & Status
                                     Row(

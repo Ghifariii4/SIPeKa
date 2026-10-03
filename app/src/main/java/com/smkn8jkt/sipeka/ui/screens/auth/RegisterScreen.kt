@@ -19,6 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -148,13 +150,14 @@ fun RegisterScreenContent(
         modifier = Modifier
             .fillMaxSize()
             .background(BgLightCanvas)
-            .safeDrawingPadding(),
+            .safeDrawingPadding()
+            .imePadding(),
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(20.dp)
+                .padding(16.dp)
                 .scale(cardScale.value)
                 .alpha(cardAlpha.value)
                 .verticalScroll(rememberScrollState()),
@@ -168,7 +171,7 @@ fun RegisterScreenContent(
                     containerColor = CardCreamWhite
                 ),
                 border = BorderStroke(1.dp, BorderStitch),
-                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -176,12 +179,12 @@ fun RegisterScreenContent(
                         .padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Logo Container - Pure Crisp White & Elevated (Tidak Samar!)
+                    // Logo Container - Pure Crisp White & Elevated Flat
                     Surface(
-                        modifier = Modifier.size(84.dp),
+                        modifier = Modifier.size(80.dp),
                         shape = CircleShape,
                         color = Color.White,
-                        shadowElevation = 6.dp,
+                        shadowElevation = 2.dp,
                         border = BorderStroke(2.dp, BorderStitch)
                     ) {
                         Box(
@@ -213,13 +216,13 @@ fun RegisterScreenContent(
 
                     Text(
                         text = "Lengkapi data diri Anda untuk bergabung di Sistem PKK",
-                        fontSize = 13.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = TextMuted,
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     SipekaTextField(
                         value = nisnNip,
@@ -238,7 +241,7 @@ fun RegisterScreenContent(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     SipekaTextField(
                         value = name,
@@ -254,7 +257,7 @@ fun RegisterScreenContent(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     SipekaDropdownField(
                         options = roleOptions,
@@ -263,7 +266,7 @@ fun RegisterScreenContent(
                         label = "Daftar Sebagai"
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     SipekaPasswordField(
                         value = password,
@@ -279,7 +282,7 @@ fun RegisterScreenContent(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     SipekaPasswordField(
                         value = confirmPassword,
@@ -295,21 +298,23 @@ fun RegisterScreenContent(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     TextButton(
                         onClick = onNavigateToLogin,
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                        modifier = Modifier
+                            .align(Alignment.CenterHorizontally)
+                            .defaultMinSize(minHeight = 48.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(
                                 text = "Sudah punya akun? ",
-                                fontSize = 13.sp,
+                                fontSize = 14.sp,
                                 color = TextMuted
                             )
                             Text(
                                 text = "Masuk",
-                                fontSize = 13.sp,
+                                fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = BtnDarkChocolate
                             )
@@ -321,7 +326,7 @@ fun RegisterScreenContent(
                         Text(
                             text = errorMessage,
                             color = MaterialTheme.colorScheme.error,
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth()

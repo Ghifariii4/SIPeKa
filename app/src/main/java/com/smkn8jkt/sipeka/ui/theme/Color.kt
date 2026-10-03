@@ -48,10 +48,19 @@ val RedErrorContainer = Color(0xFFFEE2E2)
 val OutlineWarm = Color(0xFFE8DFD8)
 val OutlineGray = Color(0xFFE3D9D0)
 
-// Backward Compatibility Aliases
+// Backward Compatibility Aliases & Extended Design Tokens
 val PrimaryBrown = BtnDarkChocolate
 val SecondaryBrown = BgDarkEspresso
 val TertiaryBrown = BtnMocha
 val PrimaryOrange = BtnMocha
 val DarkBrown = BtnDarkChocolate
 val VibrantOrange = Color(0xFFF95721)
+val DarkMochaHero = Color(0xFF451A0D)
+val HeroIconBg = Color(0xFF5A2818)
+val SoftPeachBadge = Color(0xFFFEE6D8)
+val ChipUnselectedBg = Color(0xFFFDF2E9)
+val ChipUnselectedText = Color(0xFF4D2314)
+val HeaderAmberGold = Color(0xFFC25E00)
+val PageBgWarm = Color(0xFFFBF8F4)
+val LiveStockDot = Color(0xFFEF4444)
+

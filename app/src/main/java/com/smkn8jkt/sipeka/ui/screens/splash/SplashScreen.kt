@@ -152,18 +152,18 @@ fun SplashScreen(
                 // Clean White Container Card for Logo - Jelas, Terang, Tidak Samar
                 Surface(
                     modifier = Modifier
-                        .size(175.dp)
+                        .size(176.dp)
                         .scale(scale.value)
                         .alpha(alpha.value),
                     shape = CircleShape,
                     color = Color.White,
-                    shadowElevation = 10.dp,
+                    shadowElevation = 4.dp,
                     border = androidx.compose.foundation.BorderStroke(2.dp, BorderStitch)
                 ) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(20.dp),
+                            .padding(24.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Image(
@@ -176,7 +176,7 @@ fun SplashScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Animated Text Content
             Column(
@@ -187,13 +187,13 @@ fun SplashScreen(
             ) {
                 Text(
                     text = "SIPeKa",
-                    fontSize = 34.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.Black,
                     color = BtnDarkChocolate,
                     letterSpacing = 1.sp
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Surface(
                     shape = RoundedCornerShape(20.dp),

@@ -61,6 +61,9 @@ dependencies {
     // Icons
     implementation("androidx.compose.material:material-icons-extended")
 
+    // Lottie Animation for Compose
+    implementation("com.airbnb.android:lottie-compose:6.4.0")
+
     // DataStore & Gson
     implementation(libs.androidx.datastore.preferences)
     implementation("com.google.code.gson:gson:2.11.0")

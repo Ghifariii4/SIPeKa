@@ -5,9 +5,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,10 +15,12 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -37,18 +36,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Fastfood
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
@@ -98,6 +93,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -113,36 +109,33 @@ import com.smkn8jkt.sipeka.data.model.ProductResponse
 import com.smkn8jkt.sipeka.data.remote.TokenManager
 import com.smkn8jkt.sipeka.navigation.Screen
 import com.smkn8jkt.sipeka.ui.components.PrimaryButton
+import com.smkn8jkt.sipeka.ui.components.SipekaLottieEmptyState
+import com.smkn8jkt.sipeka.ui.components.SipekaProductSkeletonCard
 import com.smkn8jkt.sipeka.ui.screens.auth.AuthViewModel
 import com.smkn8jkt.sipeka.ui.screens.pos.ProductImage
 import com.smkn8jkt.sipeka.ui.screens.pos.toRupiahFormat
 import com.smkn8jkt.sipeka.ui.theme.AmberWarning
 import com.smkn8jkt.sipeka.ui.theme.AmberWarningContainer
 import com.smkn8jkt.sipeka.ui.theme.BgDarkEspresso
+import com.smkn8jkt.sipeka.ui.theme.BgLightCanvas
 import com.smkn8jkt.sipeka.ui.theme.BgWarmTan
-import com.smkn8jkt.sipeka.ui.theme.BorderStitch
 import com.smkn8jkt.sipeka.ui.theme.BtnCreamWhite
 import com.smkn8jkt.sipeka.ui.theme.BtnDarkChocolate
-import com.smkn8jkt.sipeka.ui.theme.BtnMocha
 import com.smkn8jkt.sipeka.ui.theme.CardCreamWhite
+import com.smkn8jkt.sipeka.ui.theme.ChipUnselectedBg
+import com.smkn8jkt.sipeka.ui.theme.ChipUnselectedText
+import com.smkn8jkt.sipeka.ui.theme.DarkMochaHero
 import com.smkn8jkt.sipeka.ui.theme.GreenSuccess
 import com.smkn8jkt.sipeka.ui.theme.GreenSuccessContainer
+import com.smkn8jkt.sipeka.ui.theme.HeroIconBg
 import com.smkn8jkt.sipeka.ui.theme.OutlineWarm
 import com.smkn8jkt.sipeka.ui.theme.RedError
 import com.smkn8jkt.sipeka.ui.theme.RedErrorContainer
+import com.smkn8jkt.sipeka.ui.theme.SoftPeachBadge
 import com.smkn8jkt.sipeka.ui.theme.TextDark
-import com.smkn8jkt.sipeka.ui.theme.TextLight
 import com.smkn8jkt.sipeka.ui.theme.TextMuted
 import com.smkn8jkt.sipeka.ui.theme.VibrantOrange
 import kotlinx.coroutines.launch
-
-// Color constants matching the Stitch / Warm Mocha Design System
-private val PageBgWarm = Color(0xFFFBF8F4)
-private val DarkMochaHero = Color(0xFF451A0D)
-private val HeroIconBg = Color(0xFF5A2818)
-private val SoftPeachBadge = Color(0xFFFEE6D8)
-private val ChipUnselectedBg = Color(0xFFFDF2E9)
-private val ChipUnselectedText = Color(0xFF4D2314)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -155,7 +148,7 @@ fun PenitipDashboardScreen(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var selectedTab by remember { mutableIntStateOf(0) } // 0: Produk Titipan, 1: Bagi Hasil, 2: Toko & Profil
+    var selectedTab by remember { mutableIntStateOf(0) }
     var showAddSheet by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -208,33 +201,35 @@ fun PenitipDashboardScreen(
     val unpaidEarnings = dashboardData?.effectiveEarnings ?: 0.0
 
     Scaffold(
-        containerColor = PageBgWarm,
+        containerColor = BgLightCanvas,
         contentWindowInsets = WindowInsets.statusBars.union(WindowInsets.displayCutout),
         floatingActionButton = {
             if (selectedTab == 0) {
                 FloatingActionButton(
                     onClick = { showAddSheet = true },
-                    containerColor = DarkMochaHero,
-                    contentColor = Color.White,
+                    containerColor = BtnDarkChocolate,
+                    contentColor = BtnCreamWhite,
                     shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.padding(bottom = 8.dp)
+                    modifier = Modifier
+                        .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
+                        .padding(bottom = 8.dp)
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Titip Produk",
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
+                            tint = BtnCreamWhite,
+                            modifier = Modifier.size(24.dp)
                         )
                         Text(
                             text = "Titip Menu Baru",
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White
+                            color = BtnCreamWhite
                         )
                     }
                 }
@@ -242,10 +237,9 @@ fun PenitipDashboardScreen(
         },
         bottomBar = {
             NavigationBar(
-                containerColor = Color.White,
+                containerColor = CardCreamWhite,
                 tonalElevation = 8.dp
             ) {
-                // Tab 0: Produk Titipan
                 NavigationBarItem(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
@@ -259,7 +253,7 @@ fun PenitipDashboardScreen(
                     label = {
                         Text(
                             text = "Produk Titipan",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Medium
                         )
                     },
@@ -272,7 +266,6 @@ fun PenitipDashboardScreen(
                     )
                 )
 
-                // Tab 1: Bagi Hasil
                 NavigationBarItem(
                     selected = selectedTab == 1,
                     onClick = {
@@ -289,7 +282,7 @@ fun PenitipDashboardScreen(
                     label = {
                         Text(
                             text = "Bagi Hasil",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Medium
                         )
                     },
@@ -302,7 +295,6 @@ fun PenitipDashboardScreen(
                     )
                 )
 
-                // Tab 2: Toko & Profil
                 NavigationBarItem(
                     selected = selectedTab == 2,
                     onClick = { selectedTab = 2 },
@@ -316,7 +308,7 @@ fun PenitipDashboardScreen(
                     label = {
                         Text(
                             text = "Toko & Profil",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = if (selectedTab == 2) FontWeight.Bold else FontWeight.Medium
                         )
                     },
@@ -368,7 +360,6 @@ fun PenitipDashboardScreen(
         }
     }
 
-    // Modal Bottom Sheet: Tambah Produk Titipan
     if (showAddSheet) {
         AddProductBottomSheet(
             isLoading = isAddLoading,
@@ -379,7 +370,6 @@ fun PenitipDashboardScreen(
         )
     }
 
-    // Modal Dialog: Konfirmasi Logout
     if (showLogoutDialog) {
         AlertDialog(
             onDismissRequest = { showLogoutDialog = false },
@@ -387,16 +377,16 @@ fun PenitipDashboardScreen(
                 Text(
                     text = "Konfirmasi Keluar",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp,
-                    color = TextDark
+                    fontSize = 16.sp,
+                    color = BgDarkEspresso
                 )
             },
             text = {
                 Text(
                     text = "Apakah Anda yakin ingin keluar dari akun Mitra Penitip SIPeKa?",
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     color = TextMuted,
-                    lineHeight = 18.sp
+                    lineHeight = 20.sp
                 )
             },
             confirmButton = {
@@ -412,24 +402,28 @@ fun PenitipDashboardScreen(
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = RedError),
-                    shape = RoundedCornerShape(10.dp)
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                 ) {
-                    Text("Ya, Keluar", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Ya, Keluar", fontWeight = FontWeight.Bold, color = BtnCreamWhite)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Batal", color = TextMuted)
+                TextButton(
+                    onClick = { showLogoutDialog = false },
+                    modifier = Modifier.defaultMinSize(minHeight = 48.dp)
+                ) {
+                    Text("Batal", color = TextMuted, fontSize = 14.sp)
                 }
             },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(18.dp)
+            containerColor = CardCreamWhite,
+            shape = RoundedCornerShape(24.dp)
         )
     }
 }
 
 // ==========================================
-// TAB 0: PRODUK TITIPAN (KATALOG & KONTROL STOK)
+// TAB 0: PRODUK TITIPAN (8PT GRID & BENTO BOX)
 // ==========================================
 @Composable
 fun PenitipProductsTab(
@@ -462,188 +456,176 @@ fun PenitipProductsTab(
     val lowStockCount = products.count { it.stock <= 5 }
 
     LazyColumn(
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        // 1. HEADER MITRA PENITIP HERO CARD
+        // 1. HERO HEADER KARTU MITRA
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = BgDarkEspresso),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Box(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(DarkMochaHero, Color(0xFF2B1810))
-                            )
-                        )
-                        .padding(18.dp)
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(46.dp)
-                                    .clip(CircleShape)
-                                    .background(HeroIconBg),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Storefront,
-                                    contentDescription = "Toko",
-                                    tint = SoftPeachBadge,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.width(12.dp))
-
-                            Column {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    Text(
-                                        text = penitipShop.ifBlank { "Kantin PKK Sejahtera" },
-                                        fontSize = 15.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                    Surface(
-                                        shape = RoundedCornerShape(4.dp),
-                                        color = SoftPeachBadge
-                                    ) {
-                                        Text(
-                                            text = "MITRA",
-                                            fontSize = 9.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            color = DarkMochaHero,
-                                            modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Pengelola: $penitipName",
-                                    fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.8f)
-                                )
-                            }
-                        }
-
-                        IconButton(
-                            onClick = onRefresh,
+                        Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(48.dp)
                                 .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.15f))
+                                .background(HeroIconBg),
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = "Refresh Data",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
+                                imageVector = Icons.Default.Storefront,
+                                contentDescription = "Toko",
+                                tint = SoftPeachBadge,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
+
+                        Spacer(modifier = Modifier.width(16.dp))
+
+                        Column {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = penitipShop.ifBlank { "Kantin PKK Sejahtera" },
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = BtnCreamWhite,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = SoftPeachBadge
+                                ) {
+                                    Text(
+                                        text = "MITRA",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = DarkMochaHero,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = "Pengelola: $penitipName",
+                                fontSize = 14.sp,
+                                color = BgWarmTan
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = onRefresh,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(CardCreamWhite.copy(alpha = 0.15f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh Data",
+                            tint = BtnCreamWhite,
+                            modifier = Modifier.size(24.dp)
+                        )
                     }
                 }
             }
         }
 
-        // 2. STATISTIK RINGKASAN PRODUK & STOK (3 KPI Cards)
+        // 2. 3 STATISTIK KPI BENTO CARDS (8pt Grid)
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Card 1: Total Menu
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.White,
+                    shape = RoundedCornerShape(16.dp),
+                    color = CardCreamWhite,
                     border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.7f)),
-                    shadowElevation = 1.dp
+                    shadowElevation = 2.dp
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.Start
                     ) {
-                        Text(text = "Total Menu", fontSize = 11.sp, color = TextMuted)
+                        Text(text = "Total Menu", fontSize = 12.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "${products.size}",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = TextDark
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = BgDarkEspresso
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = "item titipan", fontSize = 10.sp, color = TextMuted)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "item titipan", fontSize = 12.sp, color = TextMuted)
                     }
                 }
 
-                // Card 2: Terjual
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.White,
+                    shape = RoundedCornerShape(16.dp),
+                    color = CardCreamWhite,
                     border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.7f)),
-                    shadowElevation = 1.dp
+                    shadowElevation = 2.dp
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.Start
                     ) {
-                        Text(text = "Terjual", fontSize = 11.sp, color = TextMuted)
+                        Text(text = "Terjual", fontSize = 12.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "$totalSoldAll",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
                             color = GreenSuccess
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = "porsi/pcs", fontSize = 10.sp, color = GreenSuccess)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "porsi/pcs", fontSize = 12.sp, color = GreenSuccess)
                     }
                 }
 
-                // Card 3: Stok Kritis / Habis
                 Surface(
                     modifier = Modifier.weight(1f),
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.White,
+                    shape = RoundedCornerShape(16.dp),
+                    color = CardCreamWhite,
                     border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.7f)),
-                    shadowElevation = 1.dp
+                    shadowElevation = 2.dp
                 ) {
                     Column(
-                        modifier = Modifier.padding(12.dp),
+                        modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.Start
                     ) {
-                        Text(text = "Perlu Restok", fontSize = 11.sp, color = TextMuted)
+                        Text(text = "Perlu Restok", fontSize = 12.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "$lowStockCount",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = if (lowStockCount > 0) AmberWarning else TextDark
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = if (lowStockCount > 0) AmberWarning else BgDarkEspresso
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = if (lowStockCount > 0) "stok <= 5" else "stok aman",
-                            fontSize = 10.sp,
+                            fontSize = 12.sp,
                             color = if (lowStockCount > 0) AmberWarning else TextMuted
                         )
                     }
@@ -651,53 +633,54 @@ fun PenitipProductsTab(
             }
         }
 
-        // 3. PENCARIAN & KATEGORI CHIPS
+        // 3. PENCARIAN & KATEGORI FILTER
         item {
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Search Bar
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    placeholder = { Text("Cari produk titipan Anda...", fontSize = 13.sp, color = TextMuted) },
+                    placeholder = { Text("Cari produk titipan Anda...", fontSize = 14.sp, color = TextMuted) },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = "Cari",
                             tint = DarkMochaHero,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     },
                     trailingIcon = {
                         if (searchQuery.isNotBlank()) {
-                            IconButton(onClick = { searchQuery = "" }) {
+                            IconButton(
+                                onClick = { searchQuery = "" },
+                                modifier = Modifier.size(48.dp)
+                            ) {
                                 Icon(
                                     imageVector = Icons.Default.Clear,
                                     contentDescription = "Hapus",
                                     tint = TextMuted,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
                     },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = TextDark,
                         unfocusedTextColor = TextDark,
-                        focusedContainerColor = Color.White,
-                        unfocusedContainerColor = Color.White,
+                        focusedContainerColor = CardCreamWhite,
+                        unfocusedContainerColor = CardCreamWhite,
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
+                        .defaultMinSize(minHeight = 48.dp)
                 )
 
-                // Category Filter Chips
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -707,32 +690,34 @@ fun PenitipProductsTab(
                         val count = if (cat == "Semua") products.size else products.count { it.effectiveCategory.equals(cat, ignoreCase = true) }
 
                         Surface(
-                            shape = RoundedCornerShape(18.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = if (isSelected) DarkMochaHero else ChipUnselectedBg,
                             border = if (!isSelected) BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.5f)) else null,
-                            modifier = Modifier.clickable { selectedCategory = cat }
+                            modifier = Modifier
+                                .defaultMinSize(minHeight = 48.dp)
+                                .clickable { selectedCategory = cat }
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
                                 Text(
                                     text = cat,
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (isSelected) Color.White else ChipUnselectedText
+                                    color = if (isSelected) BtnCreamWhite else ChipUnselectedText
                                 )
                                 Surface(
                                     shape = CircleShape,
-                                    color = if (isSelected) Color.White.copy(alpha = 0.25f) else Color.White
+                                    color = if (isSelected) CardCreamWhite.copy(alpha = 0.25f) else CardCreamWhite
                                 ) {
                                     Text(
                                         text = "$count",
-                                        fontSize = 10.sp,
+                                        fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (isSelected) Color.White else DarkMochaHero,
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp)
+                                        color = if (isSelected) BtnCreamWhite else DarkMochaHero,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                     )
                                 }
                             }
@@ -742,107 +727,35 @@ fun PenitipProductsTab(
             }
         }
 
-        // 4. DAFTAR PRODUK TITIPAN
+        // 4. DAFTAR PRODUK (SKELETON, EMPTY STATE LOTTIE, ATAU CARDS)
         if (isLoading) {
             item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(color = DarkMochaHero, modifier = Modifier.size(32.dp))
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Text("Memuat data produk titipan...", color = TextMuted, fontSize = 13.sp)
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    repeat(3) {
+                        SipekaProductSkeletonCard()
                     }
                 }
             }
         } else if (products.isEmpty()) {
             item {
-                Surface(
-                    shape = RoundedCornerShape(18.dp),
-                    color = Color.White,
-                    border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.6f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(28.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(64.dp)
-                                .clip(CircleShape)
-                                .background(SoftPeachBadge),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ShoppingBag,
-                                contentDescription = "Empty",
-                                tint = DarkMochaHero,
-                                modifier = Modifier.size(30.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(14.dp))
-                        Text(
-                            text = "Belum Ada Menu Titipan",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                            color = TextDark
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "Titipkan makanan, minuman, atau snack Anda ke Kantin PKK SMKN 8 Jakarta untuk mulai menghasilkan bagi hasil.",
-                            fontSize = 12.sp,
-                            color = TextMuted,
-                            textAlign = TextAlign.Center,
-                            lineHeight = 17.sp
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(
-                            onClick = onOpenAddSheet,
-                            shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = DarkMochaHero)
-                        ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text("Titip Menu Pertama", fontWeight = FontWeight.Bold, fontSize = 13.sp)
-                        }
-                    }
-                }
+                SipekaLottieEmptyState(
+                    title = "Belum Ada Menu Titipan",
+                    description = "Titipkan makanan, minuman, atau snack Anda ke Kantin PKK SMKN 8 Jakarta untuk mulai menghasilkan bagi hasil.",
+                    actionButtonText = "Titip Menu Pertama",
+                    onActionClick = onOpenAddSheet
+                )
             }
         } else if (filteredProducts.isEmpty()) {
             item {
-                Surface(
-                    shape = RoundedCornerShape(16.dp),
-                    color = Color.White,
-                    border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.5f)),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = "Tidak Ada Menu yang Cocok",
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp,
-                            color = TextDark
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Coba ubah kata kunci pencarian atau pilih filter kategori lainnya.",
-                            fontSize = 12.sp,
-                            color = TextMuted,
-                            textAlign = TextAlign.Center
-                        )
+                SipekaLottieEmptyState(
+                    title = "Tidak Ada Menu yang Cocok",
+                    description = "Coba ubah kata kunci pencarian atau pilih filter kategori menu lainnya.",
+                    actionButtonText = "Reset Filter",
+                    onActionClick = {
+                        searchQuery = ""
+                        selectedCategory = "Semua"
                     }
-                }
+                )
             }
         } else {
             items(filteredProducts, key = { it.id }) { product ->
@@ -856,7 +769,7 @@ fun PenitipProductsTab(
 }
 
 // ==========================================
-// CARD PRODUK TITIPAN BERKUALITAS TINGGI
+// CARD PRODUK TITIPAN (8PT GRID & BENTO BOX)
 // ==========================================
 @Composable
 fun PenitipProductCard(
@@ -870,108 +783,109 @@ fun PenitipProductCard(
     val schoolMargin = product.schoolMargin ?: 1000.0
     val netEarningsPerUnit = (product.price - schoolMargin).coerceAtLeast(0.0)
 
-    Surface(
+    Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
-        color = Color.White,
-        border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.6f)),
-        shadowElevation = 2.dp
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.6f))
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(14.dp)
+                .padding(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.Top
             ) {
-                // Gambar Produk
                 ProductImage(
                     imageUrl = product.imageUrl,
                     category = product.effectiveCategory,
                     contentDescription = product.name,
                     modifier = Modifier
-                        .size(76.dp)
-                        .clip(RoundedCornerShape(14.dp))
+                        .size(80.dp)
+                        .clip(RoundedCornerShape(16.dp))
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(16.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
-                    // Header: Kategori & Tombol Hapus
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = ChipUnselectedBg
                         ) {
                             Text(
                                 text = product.effectiveCategory,
-                                fontSize = 10.sp,
+                                fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = DarkMochaHero,
-                                modifier = Modifier.padding(horizontal = 7.dp, vertical = 2.dp)
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
 
                         IconButton(
                             onClick = { showDeleteConfirmDialog = true },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier
+                                .size(48.dp)
+                                .defaultMinSize(minWidth = 48.dp, minHeight = 48.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.DeleteOutline,
                                 contentDescription = "Hapus Produk",
                                 tint = RedError,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
                     Text(
                         text = product.name,
-                        fontSize = 14.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextDark,
+                        color = BgDarkEspresso,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
 
                     if (!product.description.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = product.description,
-                            fontSize = 11.sp,
+                            fontSize = 14.sp,
                             color = TextMuted,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = product.price.toRupiahFormat(),
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.ExtraBold,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
                             color = DarkMochaHero
                         )
                         Text(
                             text = "•",
-                            fontSize = 12.sp,
+                            fontSize = 14.sp,
                             color = TextMuted
                         )
                         Text(
-                            text = "Bagi Hasil: ${netEarningsPerUnit.toRupiahFormat()}/pcs",
-                            fontSize = 11.sp,
+                            text = "Bersih: ${netEarningsPerUnit.toRupiahFormat()}/pcs",
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = GreenSuccess
                         )
@@ -979,19 +893,17 @@ fun PenitipProductCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-            HorizontalDivider(color = OutlineWarm.copy(alpha = 0.4f), thickness = 0.8.dp)
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider(color = OutlineWarm.copy(alpha = 0.5f), thickness = 1.dp)
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Footer Card: Badge Status Stok & Total Terjual
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Status Stok
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = when {
                         isOutOfStock -> RedErrorContainer
                         isLowStock -> AmberWarningContainer
@@ -1005,7 +917,7 @@ fun PenitipProductCard(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(6.dp)
+                                .size(8.dp)
                                 .clip(CircleShape)
                                 .background(
                                     when {
@@ -1018,10 +930,10 @@ fun PenitipProductCard(
                         Text(
                             text = when {
                                 isOutOfStock -> "Stok Habis"
-                                isLowStock -> "Sisa: ${product.stock} pcs (Segera Restok)"
+                                isLowStock -> "Sisa: ${product.stock} pcs (Restok)"
                                 else -> "Sisa Stok: ${product.stock} pcs"
                             },
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
                             color = when {
                                 isOutOfStock -> RedError
@@ -1032,7 +944,6 @@ fun PenitipProductCard(
                     }
                 }
 
-                // Total Terjual
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -1041,11 +952,11 @@ fun PenitipProductCard(
                         imageVector = Icons.Default.ShoppingBag,
                         contentDescription = null,
                         tint = TextMuted,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                     Text(
                         text = "Terjual: ${product.totalSold} pcs",
-                        fontSize = 11.sp,
+                        fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         color = TextDark
                     )
@@ -1062,15 +973,15 @@ fun PenitipProductCard(
                     text = "Hapus Menu Titipan",
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = TextDark
+                    color = BgDarkEspresso
                 )
             },
             text = {
                 Text(
                     text = "Apakah Anda yakin ingin menghapus '${product.name}' dari katalog titipan kantin? Tindakan ini tidak dapat dibatalkan.",
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     color = TextMuted,
-                    lineHeight = 18.sp
+                    lineHeight = 20.sp
                 )
             },
             confirmButton = {
@@ -1079,25 +990,29 @@ fun PenitipProductCard(
                         showDeleteConfirmDialog = false
                         onDeleteProduct(product.id)
                     },
-                    shape = RoundedCornerShape(10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = RedError)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = RedError),
+                    modifier = Modifier.defaultMinSize(minHeight = 48.dp)
                 ) {
-                    Text("Ya, Hapus", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Ya, Hapus", fontWeight = FontWeight.Bold, color = BtnCreamWhite)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Batal", color = TextMuted)
+                TextButton(
+                    onClick = { showDeleteConfirmDialog = false },
+                    modifier = Modifier.defaultMinSize(minHeight = 48.dp)
+                ) {
+                    Text("Batal", color = TextMuted, fontSize = 14.sp)
                 }
             },
-            containerColor = Color.White,
-            shape = RoundedCornerShape(18.dp)
+            containerColor = CardCreamWhite,
+            shape = RoundedCornerShape(24.dp)
         )
     }
 }
 
 // ==========================================
-// TAB 1: BAGI HASIL (KEUANGAN & KAS PKK)
+// TAB 1: BAGI HASIL (FINANSIAL & KAS PKK)
 // ==========================================
 @Composable
 fun PenitipBagiHasilTab(
@@ -1111,104 +1026,93 @@ fun PenitipBagiHasilTab(
     val totalSchoolCommission = products.sumOf { (it.schoolMargin ?: 1000.0) * it.totalSold }
 
     LazyColumn(
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 100.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 120.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier.fillMaxSize()
     ) {
-        // 1. HERO CARD: TOTAL PENDAPATAN BERSIH BELUM DICAIRKAN
+        // 1. HERO CARD: TOTAL PENDAPATAN BERSIH
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                shape = RoundedCornerShape(24.dp),
+                colors = CardDefaults.cardColors(containerColor = BgDarkEspresso),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(DarkMochaHero, Color(0xFF2B1810))
-                            )
-                        )
-                        .padding(20.dp)
-                ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(HeroIconBg),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.AccountBalanceWallet,
-                                        contentDescription = "Saldo",
-                                        tint = SoftPeachBadge,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Column {
-                                    Text(
-                                        text = "Saldo Bersih Mitra",
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = SoftPeachBadge
-                                    )
-                                    Text(
-                                        text = "Belum Dicairkan",
-                                        fontSize = 11.sp,
-                                        color = Color.White.copy(alpha = 0.75f)
-                                    )
-                                }
-                            }
-
-                            IconButton(
-                                onClick = onRefresh,
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
                                 modifier = Modifier
-                                    .size(34.dp)
+                                    .size(48.dp)
                                     .clip(CircleShape)
-                                    .background(Color.White.copy(alpha = 0.15f))
+                                    .background(HeroIconBg),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Refresh",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(16.dp)
+                                    imageVector = Icons.Default.AccountBalanceWallet,
+                                    contentDescription = "Saldo",
+                                    tint = SoftPeachBadge,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Column {
+                                Text(
+                                    text = "Saldo Bersih Mitra",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = SoftPeachBadge
+                                )
+                                Text(
+                                    text = "Belum Dicairkan",
+                                    fontSize = 14.sp,
+                                    color = CardCreamWhite.copy(alpha = 0.75f)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = unpaidEarnings.toRupiahFormat(),
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = Color.White.copy(alpha = 0.12f)
+                        IconButton(
+                            onClick = onRefresh,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(CardCreamWhite.copy(alpha = 0.15f))
                         ) {
-                            Text(
-                                text = "Formula: (Harga Jual - Rp 1.000) × Terjual",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = SoftPeachBadge,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Refresh",
+                                tint = BtnCreamWhite,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = unpaidEarnings.toRupiahFormat(),
+                        fontSize = 32.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = BtnCreamWhite
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = CardCreamWhite.copy(alpha = 0.12f)
+                    ) {
+                        Text(
+                            text = "Formula: (Harga Jual - Rp 1.000) × Terjual",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = SoftPeachBadge,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
                     }
                 }
             }
@@ -1218,18 +1122,17 @@ fun PenitipBagiHasilTab(
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Omset Kotor
-                Surface(
+                Card(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(16.dp),
-                    color = Color.White,
+                    colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
                     border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.7f)),
-                    shadowElevation = 1.dp
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(text = "Total Omset Penjualan", fontSize = 11.sp, color = TextMuted)
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "Total Omset Penjualan", fontSize = 12.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = totalGrossRevenue.toRupiahFormat(),
@@ -1237,21 +1140,20 @@ fun PenitipBagiHasilTab(
                             fontWeight = FontWeight.Bold,
                             color = TextDark
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = "$totalSoldAll porsi terjual", fontSize = 10.sp, color = TextMuted)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "$totalSoldAll porsi terjual", fontSize = 12.sp, color = TextMuted)
                     }
                 }
 
-                // Kontribusi Kas PKK
-                Surface(
+                Card(
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(16.dp),
-                    color = Color.White,
+                    colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
                     border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.7f)),
-                    shadowElevation = 1.dp
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
-                        Text(text = "Kas Operasional PKK", fontSize = 11.sp, color = TextMuted)
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "Kas Operasional PKK", fontSize = 12.sp, color = TextMuted)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = totalSchoolCommission.toRupiahFormat(),
@@ -1259,19 +1161,20 @@ fun PenitipBagiHasilTab(
                             fontWeight = FontWeight.Bold,
                             color = DarkMochaHero
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(text = "Rp 1.000 per porsi", fontSize = 10.sp, color = DarkMochaHero)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(text = "Rp 1.000 per porsi", fontSize = 12.sp, color = DarkMochaHero)
                     }
                 }
             }
         }
 
-        // 3. KARTU TRANSPARANSI BAGI HASIL SEKOLAH
+        // 3. TRANSPARANSI BAGI HASIL SEKOLAH
         item {
-            Surface(
+            Card(
                 shape = RoundedCornerShape(16.dp),
-                color = ChipUnselectedBg,
+                colors = CardDefaults.cardColors(containerColor = ChipUnselectedBg),
                 border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.6f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -1280,22 +1183,22 @@ fun PenitipBagiHasilTab(
                             imageVector = Icons.Default.Info,
                             contentDescription = null,
                             tint = DarkMochaHero,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Transparansi Bagi Hasil Kantin PKK",
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = DarkMochaHero
                         )
                     }
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         text = "Setiap produk yang terjual melalui kasir akan dipotong margin tetap Rp 1.000 untuk kas operasional koperasi & kebersihan kantin sekolah SMKN 8 Jakarta. Sisa 100% adalah hak bersih mitra penitip.",
-                        fontSize = 11.sp,
+                        fontSize = 14.sp,
                         color = TextDark,
-                        lineHeight = 16.sp
+                        lineHeight = 20.sp
                     )
                 }
             }
@@ -1310,13 +1213,13 @@ fun PenitipBagiHasilTab(
             ) {
                 Text(
                     text = "Rincian Bagi Hasil per Menu",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextDark
+                    color = BgDarkEspresso
                 )
                 Text(
                     text = "${products.size} Menu",
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     color = TextMuted,
                     fontWeight = FontWeight.Medium
                 )
@@ -1326,11 +1229,11 @@ fun PenitipBagiHasilTab(
         // 5. LIST RINCIAN PER PRODUK
         if (products.isEmpty()) {
             item {
-                Text(
-                    text = "Belum ada produk titipan yang terdaftar.",
-                    fontSize = 12.sp,
-                    color = TextMuted,
-                    modifier = Modifier.padding(vertical = 12.dp)
+                SipekaLottieEmptyState(
+                    title = "Belum Ada Catatan Penjualan",
+                    description = "Menu yang Anda titipkan akan otomatis tercatat rincian bagi hasilnya setelah terjual di kasir.",
+                    actionButtonText = null,
+                    onActionClick = null
                 )
             }
         } else {
@@ -1339,13 +1242,14 @@ fun PenitipBagiHasilTab(
                 val netUnit = (product.price - margin).coerceAtLeast(0.0)
                 val netTotal = netUnit * product.totalSold
 
-                Surface(
-                    shape = RoundedCornerShape(14.dp),
-                    color = Color.White,
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
                     border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.5f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Column(modifier = Modifier.padding(14.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
@@ -1353,7 +1257,7 @@ fun PenitipBagiHasilTab(
                         ) {
                             Text(
                                 text = product.name,
-                                fontSize = 13.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextDark,
                                 modifier = Modifier.weight(1f),
@@ -1362,13 +1266,13 @@ fun PenitipBagiHasilTab(
                             )
                             Text(
                                 text = netTotal.toRupiahFormat(),
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.ExtraBold,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold,
                                 color = GreenSuccess
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(4.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -1377,12 +1281,12 @@ fun PenitipBagiHasilTab(
                         ) {
                             Text(
                                 text = "Harga: ${product.price.toRupiahFormat()} × ${product.totalSold} terjual",
-                                fontSize = 11.sp,
+                                fontSize = 14.sp,
                                 color = TextMuted
                             )
                             Text(
                                 text = "Bersih: ${netUnit.toRupiahFormat()}/pcs",
-                                fontSize = 11.sp,
+                                fontSize = 14.sp,
                                 color = DarkMochaHero,
                                 fontWeight = FontWeight.Medium
                             )
@@ -1394,19 +1298,20 @@ fun PenitipBagiHasilTab(
 
         // 6. INFO PENCAIRAN SALDO
         item {
-            Surface(
-                shape = RoundedCornerShape(14.dp),
-                color = Color.White,
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
                 border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.6f)),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(14.dp),
+                    modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(48.dp)
                             .clip(CircleShape)
                             .background(GreenSuccessContainer),
                         contentAlignment = Alignment.Center
@@ -1415,23 +1320,23 @@ fun PenitipBagiHasilTab(
                             imageVector = Icons.Default.CheckCircle,
                             contentDescription = null,
                             tint = GreenSuccess,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(12.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
                             text = "Cara Pencairan Dana",
-                            fontSize = 13.sp,
+                            fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextDark
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Pencairan saldo dapat diambil langsung melalui Guru Pembina PKK atau Petugas Kasir pada akhir shift atau jadwal mingguan sekolah.",
-                            fontSize = 11.sp,
+                            fontSize = 14.sp,
                             color = TextMuted,
-                            lineHeight = 16.sp
+                            lineHeight = 20.sp
                         )
                     }
                 }
@@ -1441,7 +1346,7 @@ fun PenitipBagiHasilTab(
 }
 
 // ==========================================
-// TAB 2: TOKO & PROFIL MITRA (LENGKAP DI DALAM LAYAR)
+// TAB 2: TOKO & PROFIL MITRA
 // ==========================================
 @Composable
 fun PenitipProfileTab(
@@ -1463,187 +1368,195 @@ fun PenitipProfileTab(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp, vertical = 14.dp)
-            .padding(bottom = 90.dp),
+            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(bottom = 120.dp)
+            .imePadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // 1. BANNER BRAND TOKO TITIPAN
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(22.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            shape = RoundedCornerShape(24.dp),
+            colors = CardDefaults.cardColors(containerColor = BgDarkEspresso),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
         ) {
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(DarkMochaHero, Color(0xFF2B1810))
-                        )
-                    )
-                    .padding(20.dp),
-                contentAlignment = Alignment.Center
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        modifier = Modifier
-                            .size(68.dp)
-                            .clip(CircleShape)
-                            .background(HeroIconBg),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Storefront,
-                            contentDescription = "Avatar Toko",
-                            tint = SoftPeachBadge,
-                            modifier = Modifier.size(34.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = penitipShop.ifBlank { "Kantin PKK Sejahtera" },
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(HeroIconBg),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Storefront,
+                        contentDescription = "Avatar Toko",
+                        tint = SoftPeachBadge,
+                        modifier = Modifier.size(36.dp)
                     )
+                }
 
-                    Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
+                Text(
+                    text = penitipShop.ifBlank { "Kantin PKK Sejahtera" },
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = BtnCreamWhite
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Penanggung Jawab: $penitipName",
+                    fontSize = 14.sp,
+                    color = BgWarmTan
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = SoftPeachBadge
+                ) {
                     Text(
-                        text = "Penanggung Jawab: $penitipName",
+                        text = "MITRA RESMI KANTIN PKK SMKN 8 JAKARTA",
                         fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.85f)
+                        fontWeight = FontWeight.Bold,
+                        color = DarkMochaHero,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = SoftPeachBadge
-                    ) {
-                        Text(
-                            text = "MITRA RESMI KANTIN PKK SMKN 8 JAKARTA",
-                            fontSize = 9.sp,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = DarkMochaHero,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
-                        )
-                    }
                 }
             }
         }
 
         // 2. FORM EDIT INFORMASI AKUN & TOKO
-        Surface(
-            shape = RoundedCornerShape(18.dp),
-            color = Color.White,
+        Card(
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
             border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.6f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Column(modifier = Modifier.padding(18.dp)) {
+            Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = "Informasi Akun & Usaha Titipan",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextDark
+                    color = BgDarkEspresso
                 )
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Perbarui nama pemilik, merek dagang, dan nomor kontak Anda.",
-                    fontSize = 12.sp,
+                    fontSize = 14.sp,
                     color = TextMuted
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Field: Nama Pemilik
-                Text(text = "Nama Pemilik / Pengelola", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Text(text = "Nama Pemilik / Pengelola", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = nameInput,
                     onValueChange = { nameInput = it; formError = null },
                     singleLine = true,
-                    placeholder = { Text("Contoh: Ibu Sari", fontSize = 13.sp) },
-                    shape = RoundedCornerShape(12.dp),
+                    placeholder = { Text("Contoh: Ibu Sari", fontSize = 14.sp) },
+                    shape = RoundedCornerShape(16.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Field: Nama Toko / Usaha
-                Text(text = "Nama Toko / Merek Titipan", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Text(text = "Nama Toko / Merek Titipan", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = shopInput,
                     onValueChange = { shopInput = it; formError = null },
                     singleLine = true,
-                    placeholder = { Text("Contoh: Dapur Mama Ayu", fontSize = 13.sp) },
-                    shape = RoundedCornerShape(12.dp),
+                    placeholder = { Text("Contoh: Dapur Mama Ayu", fontSize = 14.sp) },
+                    shape = RoundedCornerShape(16.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Field: NIP / Kontak WhatsApp
-                Text(text = "NIP / Nomor Kontak", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Text(text = "NIP / Nomor Kontak", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = nipInput,
                     onValueChange = { nipInput = it; formError = null },
                     singleLine = true,
-                    placeholder = { Text("Contoh: 08123456789 atau PNT-8821", fontSize = 13.sp) },
-                    shape = RoundedCornerShape(12.dp),
+                    placeholder = { Text("Contoh: 08123456789 atau PNT-8821", fontSize = 14.sp) },
+                    shape = RoundedCornerShape(16.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // Field: Password Baru
-                Text(text = "Password Baru (Opsional)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Text(text = "Password Baru (Opsional)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = passwordInput,
                     onValueChange = { passwordInput = it; formError = null },
                     singleLine = true,
-                    placeholder = { Text("Kosongkan jika tidak ingin diubah", fontSize = 13.sp) },
+                    placeholder = { Text("Kosongkan jika tidak ingin diubah", fontSize = 14.sp) },
                     visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                     trailingIcon = {
-                        IconButton(onClick = { showPassword = !showPassword }) {
+                        IconButton(
+                            onClick = { showPassword = !showPassword },
+                            modifier = Modifier.size(48.dp)
+                        ) {
                             Icon(
                                 imageVector = if (showPassword) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                                 contentDescription = "Toggle Password",
-                                tint = TextMuted
+                                tint = TextMuted,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                     },
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                 )
 
                 formError?.let { err ->
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = err, color = RedError, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                    Text(text = err, color = RedError, fontSize = 14.sp, fontWeight = FontWeight.Medium)
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 PrimaryButton(
                     text = "Simpan Perubahan Akun",
@@ -1664,25 +1577,26 @@ fun PenitipProfileTab(
         }
 
         // 3. PANDUAN & KETENTUAN TITIP PRODUK
-        Surface(
+        Card(
             shape = RoundedCornerShape(16.dp),
-            color = Color.White,
+            colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
             border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.6f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Text(
                     text = "Standar Kemitraan Kantin PKK",
-                    fontSize = 13.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextDark
+                    color = BgDarkEspresso
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = "1. Makanan basah wajib disetor sebelum pukul 08.30 WIB.\n2. Wajib menggunakan kemasan bersih, higienis, dan bertutup rapat.\n3. Cantumkan nama makanan dan nomor porsi saat menyerahkan fisik ke kantin.",
-                    fontSize = 11.sp,
+                    fontSize = 14.sp,
                     color = TextMuted,
-                    lineHeight = 17.sp
+                    lineHeight = 20.sp
                 )
             }
         }
@@ -1690,23 +1604,23 @@ fun PenitipProfileTab(
         // 4. TOMBOL LOGOUT
         OutlinedButton(
             onClick = onLogoutClick,
-            shape = RoundedCornerShape(14.dp),
+            shape = RoundedCornerShape(16.dp),
             border = BorderStroke(1.dp, RedError.copy(alpha = 0.6f)),
             colors = ButtonDefaults.outlinedButtonColors(contentColor = RedError),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(48.dp)
+                .defaultMinSize(minHeight = 48.dp)
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.Logout,
                 contentDescription = "Keluar Akun",
                 tint = RedError,
-                modifier = Modifier.size(18.dp)
+                modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Keluar dari Akun Penitip",
-                fontSize = 13.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 color = RedError
             )
@@ -1715,7 +1629,7 @@ fun PenitipProfileTab(
 }
 
 // ==========================================
-// MODAL BOTTOM SHEET: TAMBAH PRODUK TITIPAN (ERGONOMIS & CANTIK)
+// MODAL BOTTOM SHEET: TAMBAH PRODUK TITIPAN
 // ==========================================
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -1746,20 +1660,20 @@ fun AddProductBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color.White,
+        containerColor = CardCreamWhite,
         dragHandle = { BottomSheetDefaults.DragHandle() },
         shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+                .padding(horizontal = 24.dp)
                 .navigationBarsPadding()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Header Sheet
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1768,18 +1682,22 @@ fun AddProductBottomSheet(
                 Column {
                     Text(
                         text = "Titip Menu Baru ke Kantin",
-                        fontSize = 17.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
-                        color = TextDark
+                        color = BgDarkEspresso
                     )
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Isi detail makanan dan stok awal titipan",
-                        fontSize = 12.sp,
+                        fontSize = 14.sp,
                         color = TextMuted
                     )
                 }
-                IconButton(onClick = onDismiss) {
-                    Icon(imageVector = Icons.Default.Close, contentDescription = "Tutup", tint = TextMuted)
+                IconButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.Close, contentDescription = "Tutup", tint = TextMuted, modifier = Modifier.size(24.dp))
                 }
             }
 
@@ -1790,7 +1708,7 @@ fun AddProductBottomSheet(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(130.dp)
+                        .height(144.dp)
                         .clip(RoundedCornerShape(16.dp))
                 ) {
                     AsyncImage(
@@ -1800,7 +1718,7 @@ fun AddProductBottomSheet(
                         modifier = Modifier.fillMaxSize()
                     )
                     Surface(
-                        shape = RoundedCornerShape(8.dp),
+                        shape = RoundedCornerShape(16.dp),
                         color = Color.Black.copy(alpha = 0.6f),
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -1811,26 +1729,27 @@ fun AddProductBottomSheet(
                     ) {
                         Text(
                             text = "Ganti Foto",
-                            fontSize = 11.sp,
+                            fontSize = 12.sp,
                             fontWeight = FontWeight.Bold,
-                            color = Color.White,
+                            color = BtnCreamWhite,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
             } else {
                 Surface(
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = ChipUnselectedBg,
                     border = BorderStroke(1.dp, OutlineWarm),
                     modifier = Modifier
                         .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                         .clickable {
                             photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                         }
                 ) {
                     Row(
-                        modifier = Modifier.padding(14.dp),
+                        modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
@@ -1838,12 +1757,12 @@ fun AddProductBottomSheet(
                             imageVector = Icons.Default.AddAPhoto,
                             contentDescription = "Tambah Foto",
                             tint = DarkMochaHero,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Pilih Foto Menu (Opsional)",
-                            fontSize = 13.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Bold,
                             color = DarkMochaHero
                         )
@@ -1853,26 +1772,29 @@ fun AddProductBottomSheet(
 
             // 2. Nama Produk
             Column {
-                Text(text = "Nama Menu Titipan", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Text(text = "Nama Menu Titipan", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = nameInput,
                     onValueChange = { nameInput = it; formError = null },
-                    placeholder = { Text("Contoh: Nasi Goreng Telur Spesial", fontSize = 13.sp) },
+                    placeholder = { Text("Contoh: Nasi Goreng Telur Spesial", fontSize = 14.sp) },
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                 )
             }
 
             // 3. Kategori Produk (Preset Chips)
             Column {
-                Text(text = "Kategori Menu", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
-                Spacer(modifier = Modifier.height(6.dp))
+                Text(text = "Kategori Menu", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1880,21 +1802,26 @@ fun AddProductBottomSheet(
                     categoryOptions.forEach { cat ->
                         val isSelected = categoryInput.equals(cat, ignoreCase = true)
                         Surface(
-                            shape = RoundedCornerShape(12.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = if (isSelected) DarkMochaHero else ChipUnselectedBg,
                             border = BorderStroke(1.dp, if (isSelected) DarkMochaHero else OutlineWarm.copy(alpha = 0.6f)),
                             modifier = Modifier
                                 .weight(1f)
+                                .defaultMinSize(minHeight = 48.dp)
                                 .clickable { categoryInput = cat }
                         ) {
-                            Text(
-                                text = cat,
-                                fontSize = 12.sp,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                color = if (isSelected) Color.White else ChipUnselectedText,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
+                            Box(
+                                modifier = Modifier.fillMaxWidth().defaultMinSize(minHeight = 48.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = cat,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) BtnCreamWhite else ChipUnselectedText,
+                                    textAlign = TextAlign.Center
+                                )
+                            }
                         }
                     }
                 }
@@ -1902,33 +1829,34 @@ fun AddProductBottomSheet(
 
             // 4. Harga Jual & Kalkulator Bagi Hasil Dinamis
             Column {
-                Text(text = "Harga Jual ke Pembeli (Rp)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Text(text = "Harga Jual ke Pembeli (Rp)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = priceInput,
                     onValueChange = { priceInput = it.filter { char -> char.isDigit() }; formError = null },
-                    placeholder = { Text("Contoh: 15000", fontSize = 13.sp) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    placeholder = { Text("Contoh: 15000", fontSize = 14.sp) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-                // Live Margin Calculator Box
                 Surface(
-                    shape = RoundedCornerShape(10.dp),
+                    shape = RoundedCornerShape(16.dp),
                     color = if (priceNumeric > 1000.0) GreenSuccessContainer.copy(alpha = 0.5f) else AmberWarningContainer.copy(alpha = 0.5f),
                     border = BorderStroke(1.dp, if (priceNumeric > 1000.0) GreenSuccess.copy(alpha = 0.3f) else AmberWarning.copy(alpha = 0.3f)),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Row(
-                        modifier = Modifier.padding(10.dp),
+                        modifier = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -1937,7 +1865,7 @@ fun AddProductBottomSheet(
                             } else {
                                 "⚠️ Harga jual wajib lebih besar dari Rp 1.000 (margin operasional kas PKK)."
                             },
-                            fontSize = 11.sp,
+                            fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
                             color = if (priceNumeric > 1000.0) GreenSuccess else AmberWarning
                         )
@@ -1947,45 +1875,50 @@ fun AddProductBottomSheet(
 
             // 5. Stok Awal Titipan
             Column {
-                Text(text = "Jumlah Porsi / Stok Fisik", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Text(text = "Jumlah Porsi / Stok Fisik", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = stockInput,
                     onValueChange = { stockInput = it.filter { char -> char.isDigit() }; formError = null },
-                    placeholder = { Text("Contoh: 20", fontSize = 13.sp) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    placeholder = { Text("Contoh: 20", fontSize = 14.sp) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                 )
             }
 
             // 6. Deskripsi Menu
             Column {
-                Text(text = "Deskripsi Singkat (Opsional)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                Text(text = "Deskripsi Singkat (Opsional)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
                 Spacer(modifier = Modifier.height(4.dp))
                 OutlinedTextField(
                     value = descInput,
                     onValueChange = { descInput = it },
-                    placeholder = { Text("Contoh: Pedas manis dengan irisan sosis", fontSize = 13.sp) },
-                    shape = RoundedCornerShape(12.dp),
+                    placeholder = { Text("Contoh: Pedas manis dengan irisan sosis", fontSize = 14.sp) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    shape = RoundedCornerShape(16.dp),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = DarkMochaHero,
                         unfocusedBorderColor = OutlineWarm.copy(alpha = 0.7f)
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .defaultMinSize(minHeight = 48.dp)
                 )
             }
 
             formError?.let { err ->
-                Text(text = err, color = RedError, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Text(text = err, color = RedError, fontSize = 14.sp, fontWeight = FontWeight.Medium)
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             PrimaryButton(
                 text = "Simpan & Titipkan Produk",

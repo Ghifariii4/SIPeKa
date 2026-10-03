@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -131,9 +133,9 @@ fun LiveClockCard() {
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = BgDarkEspresso),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -149,17 +151,17 @@ fun LiveClockCard() {
                     color = BgWarmTan,
                     fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.height(3.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = dateFormat.format(Date(currentTime)),
-                    fontSize = 13.sp,
+                    fontSize = 14.sp,
                     color = BtnCreamWhite,
                     fontWeight = FontWeight.SemiBold
                 )
             }
 
             Surface(
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(16.dp),
                 color = BtnMocha.copy(alpha = 0.4f)
             ) {
                 Text(
@@ -167,7 +169,7 @@ fun LiveClockCard() {
                     fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = BtnCreamWhite,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
         }
@@ -355,29 +357,30 @@ fun ProfilKasirScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Text(
                 text = "Profil Kasir",
-                fontSize = 22.sp,
+                fontSize = 24.sp,
                 fontWeight = FontWeight.ExtraBold,
                 color = TextDark
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             LiveClockCard()
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Profil Header Card
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
                     modifier = Modifier
@@ -387,7 +390,7 @@ fun ProfilKasirScreen(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
+                            .size(56.dp)
                             .clip(CircleShape)
                             .background(BgWarmTan.copy(alpha = 0.4f)),
                         contentAlignment = Alignment.Center
@@ -396,20 +399,20 @@ fun ProfilKasirScreen(
                             imageVector = Icons.Default.AccountCircle,
                             contentDescription = "Profil",
                             tint = BtnDarkChocolate,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(40.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(14.dp))
+                    Spacer(modifier = Modifier.width(16.dp))
 
                     Column {
                         Text(
                             text = kasirName,
-                            fontSize = 17.sp,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.ExtraBold,
                             color = TextDark
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "NIP: $kasirNip • ID: ${currentShift?.displayKasirId ?: "-"}",
                             fontSize = 12.sp,
@@ -419,14 +422,14 @@ fun ProfilKasirScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Card Edit Informasi Akun Kasir Sendiri
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
                 border = BorderStroke(1.dp, OutlineWarm.copy(alpha = 0.5f))
             ) {
                 Column(
@@ -436,18 +439,18 @@ fun ProfilKasirScreen(
                 ) {
                     Text(
                         text = "Edit Informasi Akun Kasir",
-                        fontSize = 15.sp,
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.ExtraBold,
                         color = TextDark
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = "Perbarui nama, NIP, dan kata sandi akun kasir Anda.",
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         color = TextMuted
                     )
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(text = "Nama Lengkap Petugas", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -455,15 +458,17 @@ fun ProfilKasirScreen(
                         value = nameInput,
                         onValueChange = { nameInput = it; formError = null },
                         singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BtnDarkChocolate,
                             unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(text = "Nomor NIP / ID Kasir", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -472,17 +477,19 @@ fun ProfilKasirScreen(
                         onValueChange = { nipInput = it; formError = null },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BtnDarkChocolate,
                             unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider(color = OutlineWarm.copy(alpha = 0.4f))
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(text = "Ganti Kata Sandi (Opsional)", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -501,15 +508,17 @@ fun ProfilKasirScreen(
                             }
                         },
                         singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BtnDarkChocolate,
                             unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(text = "Konfirmasi Kata Sandi Baru", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextDark)
                     Spacer(modifier = Modifier.height(4.dp))
@@ -519,20 +528,22 @@ fun ProfilKasirScreen(
                         visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BtnDarkChocolate,
                             unfocusedBorderColor = OutlineWarm.copy(alpha = 0.6f)
                         ),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .defaultMinSize(minHeight = 48.dp)
                     )
 
                     formError?.let { err ->
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text(text = err, color = RedError, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                        Text(text = err, color = RedError, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                     }
 
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Button(
                         onClick = {
@@ -563,34 +574,34 @@ fun ProfilKasirScreen(
                             confirmPasswordInput = ""
                         },
                         enabled = !isUpdatingKasir,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = BtnDarkChocolate,
                             contentColor = BtnCreamWhite
                         ),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(46.dp)
+                            .defaultMinSize(minHeight = 48.dp)
                     ) {
                         if (isUpdatingKasir) {
                             CircularProgressIndicator(color = BtnCreamWhite, modifier = Modifier.size(20.dp))
                         } else {
                             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(text = "Simpan Perubahan Akun", fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(text = "Simpan Perubahan Akun", fontSize = 14.sp, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Card Status Shift
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = CardCreamWhite),
-                elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier
@@ -607,19 +618,19 @@ fun ProfilKasirScreen(
                                 imageVector = Icons.Default.LockClock,
                                 contentDescription = "Shift",
                                 tint = BtnDarkChocolate,
-                                modifier = Modifier.size(20.dp)
+                                modifier = Modifier.size(24.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 text = "Status Shift",
-                                fontSize = 15.sp,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = TextDark
                             )
                         }
 
                         Surface(
-                            shape = RoundedCornerShape(8.dp),
+                            shape = RoundedCornerShape(16.dp),
                             color = if (currentShift?.isShiftActive == true) GreenSuccessContainer else RedErrorContainer
                         ) {
                             Text(
@@ -632,16 +643,16 @@ fun ProfilKasirScreen(
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
                     HorizontalDivider(color = OutlineWarm.copy(alpha = 0.4f))
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Mulai Shift", fontSize = 13.sp, color = TextMuted)
-                        Text(formatShiftTime(currentShift?.displayStartTime), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                        Text("Mulai Shift", fontSize = 14.sp, color = TextMuted)
+                        Text(formatShiftTime(currentShift?.displayStartTime), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -650,8 +661,8 @@ fun ProfilKasirScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Modal Awal", fontSize = 13.sp, color = TextMuted)
-                        Text(displayModalAwal.toRupiahFormat(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                        Text("Modal Awal", fontSize = 14.sp, color = TextMuted)
+                        Text(displayModalAwal.toRupiahFormat(), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -660,8 +671,8 @@ fun ProfilKasirScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Total Penjualan", fontSize = 13.sp, color = TextMuted)
-                        Text(shiftSales.toRupiahFormat(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
+                        Text("Total Penjualan", fontSize = 14.sp, color = TextMuted)
+                        Text(shiftSales.toRupiahFormat(), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextDark)
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -670,19 +681,19 @@ fun ProfilKasirScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("Total Kas Laci", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextDark)
-                        Text((currentShift?.expectedCash ?: displayModalAwal).toRupiahFormat(), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold, color = BtnDarkChocolate)
+                        Text("Total Kas Laci", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextDark)
+                        Text((currentShift?.expectedCash ?: displayModalAwal).toRupiahFormat(), fontSize = 16.sp, fontWeight = FontWeight.ExtraBold, color = BtnDarkChocolate)
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(18.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Tombol Tutup Shift
             Button(
                 onClick = { showClockOutConfirmDialog = true },
                 enabled = !isClockOutLoading && currentShift?.isShiftActive == true,
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = BtnDarkChocolate,
                     contentColor = BtnCreamWhite,
@@ -690,17 +701,17 @@ fun ProfilKasirScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .defaultMinSize(minHeight = 48.dp)
             ) {
                 Text(
                     text = if (isClockOutLoading) "Memproses..." else "Tutup Shift",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = BtnCreamWhite
                 )
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Tombol Logout
             val scope = rememberCoroutineScope()
@@ -714,11 +725,11 @@ fun ProfilKasirScreen(
                         }
                     }
                 },
-                shape = RoundedCornerShape(14.dp),
+                shape = RoundedCornerShape(16.dp),
                 border = BorderStroke(1.5.dp, BtnMocha),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(50.dp)
+                    .defaultMinSize(minHeight = 48.dp)
             ) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.Logout,
@@ -729,13 +740,13 @@ fun ProfilKasirScreen(
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Keluar / Logout",
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = BtnDarkChocolate
                 )
             }
 
-            Spacer(modifier = Modifier.height(36.dp))
+            Spacer(modifier = Modifier.height(120.dp))
         }
     }
 
